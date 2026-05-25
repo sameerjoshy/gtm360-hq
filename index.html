@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GTM360 HQ</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #22222e;
+    --accent: #ff4d00;
+    --accent2: #ff8c00;
+    --green: #00e676;
+    --yellow: #ffd600;
+    --red: #ff1744;
+    --blue: #2979ff;
+    --text: #f0f0f8;
+    --text2: #8888aa;
+    --text3: #55556a;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(255,77,0,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,77,0,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { position: relative; z-index: 1; max-width: 1600px; margin: 0 auto; padding: 0 24px; }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(20px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .logo-main {
+    font-family: var(--font-display);
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+
+  .logo-main span { color: var(--accent); }
+
+  .logo-sub {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .last-sync {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .last-sync span { color: var(--green); }
+
+  .btn {
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+
+  .btn-ghost:hover { border-color: var(--text2); color: var(--text); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+  }
+
+  .btn-primary:hover { background: #ff6a00; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-loading { opacity: 0.7; pointer-events: none; }
+
+  /* ONE THING BANNER */
+  .one-thing {
+    margin: 24px 24px 0;
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 20px 28px;
+    background: linear-gradient(135deg, rgba(255,77,0,0.12) 0%, rgba(255,140,0,0.06) 100%);
+    border: 1px solid rgba(255,77,0,0.3);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .one-thing-label {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .one-thing-text {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* METRIC CARDS */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .metric-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .metric-card:hover { border-color: var(--border); }
+  .metric-card:hover::after { opacity: 1; }
+
+  .metric-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 10px;
+  }
+
+  .metric-value {
+    font-family: var(--font-display);
+    font-size: 36px;
+    letter-spacing: 1px;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .metric-sub {
+    font-size: 12px;
+    color: var(--text3);
+  }
+
+  .metric-sub .up { color: var(--green); }
+  .metric-sub .warn { color: var(--yellow); }
+  .metric-sub .danger { color: var(--red); }
+
+  /* MAIN GRID */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1.8fr 1.2fr 1fr;
+    gap: 16px;
+    padding: 0 24px 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* PANELS */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .panel-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+
+  .panel-title-sub {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+  }
+
+  .badge-green { background: rgba(0,230,118,0.1); color: var(--green); border: 1px solid rgba(0,230,118,0.2); }
+  .badge-yellow { background: rgba(255,214,0,0.1); color: var(--yellow); border: 1px solid rgba(255,214,0,0.2); }
+  .badge-red { background: rgba(255,23,68,0.1); color: var(--red); border: 1px solid rgba(255,23,68,0.2); }
+  .badge-blue { background: rgba(41,121,255,0.1); color: var(--blue); border: 1px solid rgba(41,121,255,0.2); }
+  .badge-gray { background: rgba(136,136,170,0.1); color: var(--text2); border: 1px solid rgba(136,136,170,0.2); }
+
+  /* PIPELINE TABLE */
+  .pipeline-table { width: 100%; border-collapse: collapse; }
+
+  .pipeline-table th {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 10px 20px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.01);
+  }
+
+  .pipeline-table td {
+    padding: 12px 20px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(34,34,46,0.5);
+    vertical-align: middle;
+  }
+
+  .pipeline-table tr:last-child td { border-bottom: none; }
+
+  .pipeline-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .pipeline-table tr.stale td { background: rgba(255,23,68,0.03); }
+  .pipeline-table tr.stale td:first-child { border-left: 2px solid var(--red); }
+
+  .company-name { font-weight: 600; color: var(--text); }
+  .company-domain { font-family: var(--font-mono); font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+  .signal-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+  }
+
+  .signal-green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .signal-yellow { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+  .signal-red { background: var(--red); box-shadow: 0 0 6px var(--red); animation: pulse 2s infinite; }
+  .signal-gray { background: var(--text3); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* STAGE PILLS */
+  .stage-pill {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .stage-radar { background: rgba(136,136,170,0.1); color: var(--text2); }
+  .stage-connected { background: rgba(41,121,255,0.1); color: var(--blue); }
+  .stage-engaged { background: rgba(255,214,0,0.1); color: var(--yellow); }
+  .stage-discovery { background: rgba(255,140,0,0.1); color: var(--accent2); }
+  .stage-proposal { background: rgba(0,230,118,0.1); color: var(--green); }
+
+  /* ICP */
+  .icp-strong { color: var(--green); font-size: 12px; }
+  .icp-moderate { color: var(--yellow); font-size: 12px; }
+  .icp-weak { color: var(--red); font-size: 12px; }
+
+  /* AMOUNT */
+  .amount { font-family: var(--font-mono); font-size: 12px; color: var(--text2); }
+
+  /* TODAY PANEL */
+  .today-section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .today-section:last-child { border-bottom: none; }
+
+  .today-section-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  .meeting-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    background: var(--surface2);
+    border-radius: 4px;
+    border-left: 2px solid var(--accent);
+  }
+
+  .meeting-time {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .meeting-company { font-size: 13px; font-weight: 600; }
+  .meeting-stage { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  .prep-status {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  .email-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .email-item:last-child { border-bottom: none; }
+
+  .email-company { font-size: 13px; font-weight: 500; flex: 1; }
+  .email-subject { font-size: 11px; color: var(--text3); }
+
+  .action-item {
+    padding: 8px 0;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .action-item:last-child { border-bottom: none; }
+
+  .action-num {
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--accent);
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .action-text { font-size: 13px; line-height: 1.5; }
+  .action-company { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* STATUS PANEL */
+  .status-section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .status-section:last-child { border-bottom: none; }
+
+  .status-section-title {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text3);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  /* OKR BARS */
+  .okr-item { margin-bottom: 14px; }
+  .okr-item:last-child { margin-bottom: 0; }
+
+  .okr-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .okr-label { font-size: 12px; font-weight: 500; }
+
+  .okr-score {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .okr-bar {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .okr-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+
+  .okr-fill-green { background: var(--green); }
+  .okr-fill-yellow { background: var(--yellow); }
+  .okr-fill-red { background: var(--red); }
+
+  /* AGENT STATUS */
+  .agent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .agent-item:last-child { border-bottom: none; }
+
+  .agent-info { display: flex; align-items: center; gap: 10px; }
+
+  .agent-avatar {
+    width: 28px; height: 28px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+
+  .agent-name { font-size: 13px; font-weight: 500; }
+  .agent-role { font-size: 10px; color: var(--text3); font-family: var(--font-mono); }
+
+  .agent-last {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  /* BOTTOM GRID */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 0 24px 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* CONTENT QUEUE */
+  .content-item {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .content-item:last-child { border-bottom: none; }
+
+  .content-format {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    background: var(--surface2);
+    color: var(--text3);
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  .content-title { font-size: 13px; font-weight: 500; flex: 1; }
+  .content-channel { font-size: 11px; color: var(--text3); }
+
+  /* FINANCE */
+  .finance-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .finance-item:last-child { border-bottom: none; }
+  .finance-label { font-size: 13px; color: var(--text2); }
+  .finance-value { font-family: var(--font-mono); font-size: 14px; font-weight: 500; }
+
+  /* ESCALATION BANNER */
+  .escalation-banner {
+    margin: 0 24px 24px;
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 14px 20px;
+    background: rgba(255,23,68,0.08);
+    border: 1px solid rgba(255,23,68,0.3);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    display: none;
+  }
+
+  .escalation-banner.visible { display: flex; }
+
+  .escalation-icon { color: var(--red); font-size: 16px; flex-shrink: 0; }
+  .escalation-text { font-size: 13px; flex: 1; }
+  .escalation-count { font-family: var(--font-mono); font-size: 12px; color: var(--red); }
+
+  /* SAM'S FLAG */
+  .sams-flag {
+    margin: 0 24px 24px;
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    border-left: 3px solid var(--accent2);
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .flag-label {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: var(--accent2);
+    flex-shrink: 0;
+  }
+
+  .flag-text { font-size: 13px; line-height: 1.6; color: var(--text2); }
+
+  /* LOADING STATE */
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 3px;
+    height: 14px;
+    margin-bottom: 8px;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    padding: 32px 20px;
+    text-align: center;
+    color: var(--text3);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 16px 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-left { font-family: var(--font-mono); font-size: 10px; color: var(--text3); }
+  .footer-left span { color: var(--text2); }
+
+  .error-count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text3);
+  }
+
+  .error-count.has-errors { color: var(--red); }
+
+  /* RESPONSIVE */
+  @media (max-width: 1200px) {
+    .main-grid { grid-template-columns: 1fr 1fr; }
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .bottom-grid { grid-template-columns: 1fr; }
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div>
+        <div class="logo-main">GTM<span>360</span> HQ</div>
+        <div class="logo-sub">Command Center</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="last-sync">Last sync: <span id="lastSync">never</span></div>
+      <button class="btn btn-ghost" onclick="refreshData()" id="refreshBtn">↻ Refresh</button>
+      <button class="btn btn-primary" onclick="startMeeting()">▶ Start Staff Meeting</button>
+    </div>
+  </div>
+</header>
+
+<!-- ONE THING -->
+<div class="container">
+  <div class="one-thing" id="oneThing">
+    <div class="one-thing-label">ONE THING</div>
+    <div class="one-thing-text" id="oneThingText">Loading today's brief...</div>
+  </div>
+</div>
+
+<!-- METRICS -->
+<div class="metrics" id="metrics">
+  <div class="metric-card">
+    <div class="metric-label">Pipeline Total</div>
+    <div class="metric-value" id="pipelineTotal">$0</div>
+    <div class="metric-sub"><span id="pipelineDeals">0</span> open deals</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Needs Attention</div>
+    <div class="metric-value" id="staleCount" style="color:var(--red)">0</div>
+    <div class="metric-sub"><span class="danger" id="staleLabel">stale deals</span></div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Content Queue</div>
+    <div class="metric-value" id="contentCount">0</div>
+    <div class="metric-sub"><span id="contentLabel">posts awaiting approval</span></div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">MTD Revenue</div>
+    <div class="metric-value" id="mtdRevenue">$0</div>
+    <div class="metric-sub"><span id="revenueLabel">this month</span></div>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main-grid">
+
+  <!-- PIPELINE PANEL -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">PIPELINE</div>
+        <div class="panel-title-sub">REX — CRO</div>
+      </div>
+      <div id="pipelineSummaryBadge" class="badge badge-gray">Loading...</div>
+    </div>
+    <table class="pipeline-table">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Stage</th>
+          <th>Service</th>
+          <th>Amount</th>
+          <th>ICP</th>
+          <th>Signal</th>
+        </tr>
+      </thead>
+      <tbody id="pipelineTableBody">
+        <tr><td colspan="6"><div class="empty-state">Loading pipeline data...</div></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- TODAY PANEL -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">TODAY</div>
+        <div class="panel-title-sub">SAM — CHIEF OF STAFF</div>
+      </div>
+      <div id="todayDate" class="badge badge-gray"></div>
+    </div>
+
+    <div class="today-section">
+      <div class="today-section-title">Meetings</div>
+      <div id="meetingsList"><div class="empty-state">No meetings today</div></div>
+    </div>
+
+    <div class="today-section">
+      <div class="today-section-title">Emails Requiring Response</div>
+      <div id="emailsList"><div class="empty-state">Inbox clear</div></div>
+    </div>
+
+    <div class="today-section">
+      <div class="today-section-title">Priority Actions</div>
+      <div id="actionsList"><div class="empty-state">No actions pending</div></div>
+    </div>
+  </div>
+
+  <!-- STATUS PANEL -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">SYSTEM</div>
+        <div class="panel-title-sub">OLA — COO</div>
+      </div>
+      <div id="systemStatus" class="badge badge-green">ALL CLEAR</div>
+    </div>
+
+    <div class="status-section">
+      <div class="status-section-title">OKR Health — Q2 2026</div>
+      <div id="okrBars"></div>
+    </div>
+
+    <div class="status-section">
+      <div class="status-section-title">Agent Status</div>
+      <div id="agentStatus">
+        <div class="agent-item">
+          <div class="agent-info">
+            <div class="agent-avatar">S</div>
+            <div><div class="agent-name">Sam</div><div class="agent-role">Chief of Staff</div></div>
+          </div>
+          <div class="agent-last"><span class="badge badge-green">ACTIVE</span></div>
+        </div>
+        <div class="agent-item">
+          <div class="agent-info">
+            <div class="agent-avatar">R</div>
+            <div><div class="agent-name">Rex</div><div class="agent-role">CRO</div></div>
+          </div>
+          <div class="agent-last"><span class="badge badge-green">ACTIVE</span></div>
+        </div>
+        <div class="agent-item">
+          <div class="agent-info">
+            <div class="agent-avatar">A</div>
+            <div><div class="agent-name">Andy</div><div class="agent-role">CMO</div></div>
+          </div>
+          <div class="agent-last"><span class="badge badge-yellow">BUILDING</span></div>
+        </div>
+        <div class="agent-item">
+          <div class="agent-info">
+            <div class="agent-avatar">F</div>
+            <div><div class="agent-name">Finn</div><div class="agent-role">CFO</div></div>
+          </div>
+          <div class="agent-last"><span class="badge badge-yellow">BUILDING</span></div>
+        </div>
+        <div class="agent-item">
+          <div class="agent-info">
+            <div class="agent-avatar">O</div>
+            <div><div class="agent-name">Ola</div><div class="agent-role">COO</div></div>
+          </div>
+          <div class="agent-last"><span class="badge badge-yellow">BUILDING</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-section">
+      <div class="status-section-title">Automations</div>
+      <div class="agent-item">
+        <div class="agent-name" style="font-size:12px">Morning Pipeline Sync</div>
+        <span class="badge badge-green">ACTIVE</span>
+      </div>
+      <div class="agent-item">
+        <div class="agent-name" style="font-size:12px">Stale Deal Monitor</div>
+        <span class="badge badge-green">ACTIVE</span>
+      </div>
+      <div class="agent-item">
+        <div class="agent-name" style="font-size:12px">OKR Pulse</div>
+        <span class="badge badge-gray">PENDING</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SAM'S FLAG -->
+<div class="container">
+  <div class="sams-flag">
+    <div class="flag-label">SAM'S FLAG</div>
+    <div class="flag-text" id="samsFlag">Pipeline is 100% at Radar stage. Nothing has moved yet. First priority: get at least 3 companies to Connected stage this week. That means making first contact.</div>
+  </div>
+</div>
+
+<!-- ESCALATION BANNER -->
+<div class="container">
+  <div class="escalation-banner" id="escalationBanner">
+    <div class="escalation-icon">⚠</div>
+    <div class="escalation-text" id="escalationText">Open escalations require your attention</div>
+    <div class="escalation-count" id="escalationCount">0 OPEN</div>
+  </div>
+</div>
+
+<!-- BOTTOM GRID -->
+<div class="bottom-grid">
+
+  <!-- CONTENT QUEUE -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">CONTENT QUEUE</div>
+        <div class="panel-title-sub">ANDY — CMO</div>
+      </div>
+      <span class="badge badge-gray">0 READY</span>
+    </div>
+    <div id="contentQueue">
+      <div class="empty-state">No content queued yet.<br>Use /capture to add raw observations.</div>
+    </div>
+  </div>
+
+  <!-- FINANCE -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">FINANCE</div>
+        <div class="panel-title-sub">FINN — CFO</div>
+      </div>
+      <span class="badge badge-gray">$0 MTD</span>
+    </div>
+    <div class="finance-item">
+      <div class="finance-label">MTD Revenue</div>
+      <div class="finance-value" style="color:var(--green)">$0</div>
+    </div>
+    <div class="finance-item">
+      <div class="finance-label">Outstanding Invoices</div>
+      <div class="finance-value">$0</div>
+    </div>
+    <div class="finance-item">
+      <div class="finance-label">Pipeline Value</div>
+      <div class="finance-value" id="finPipeline">$0</div>
+    </div>
+    <div class="finance-item">
+      <div class="finance-label">Active Engagements</div>
+      <div class="finance-value">0</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="container">
+  <footer>
+    <div class="footer-left">
+      GTM360 HQ · Sameer Joshi · 
+      <span id="footerSync">Never synced</span>
+    </div>
+    <div class="error-count" id="errorCount">0 errors</div>
+  </footer>
+</div>
+
+<script>
+// ============================================
+// CONFIGURATION — UPDATE THESE VALUES
+// ============================================
+const SUPABASE_URL = 'https://dtqsnojfatzjsklsjzwj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0cXNub2pmYXR6anNrbHNqendqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MTk2MjgsImV4cCI6MjA5NTE5NTYyOH0.IOnNkAmFw-iGnWq2h2vVg0VRE7Smm-sNSMYUDcL3GLQ'; // Replace with your anon key
+
+// ============================================
+// SUPABASE CLIENT
+// ============================================
+async function query(table, params = '') {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${params}`, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json'
+    }
+  });
+  if (!res.ok) throw new Error(`Supabase error: ${res.status}`);
+  return res.json();
+}
+
+// ============================================
+// STAGE MAPPING
+// ============================================
+const stageMap = {
+  'appointmentscheduled': { label: 'Radar', class: 'stage-radar' },
+  'qualifiedtobuy': { label: 'Connected', class: 'stage-connected' },
+  'presentationscheduled': { label: 'Engaged', class: 'stage-engaged' },
+  'decisionmakerboughtin': { label: 'Discovery', class: 'stage-discovery' },
+  'contractsent': { label: 'Proposal', class: 'stage-proposal' },
+};
+
+function getStage(s) {
+  return stageMap[s] || { label: s || 'Unknown', class: 'stage-radar' };
+}
+
+function getServiceLine(dealName) {
+  if (!dealName) return '—';
+  if (dealName.includes('Diagnostic')) return 'DIAG';
+  if (dealName.includes('Fractional')) return 'FCRO';
+  if (dealName.includes('RevOps') || dealName.includes('Audit')) return 'ROPS';
+  return '—';
+}
+
+function getSignal(lastActivity) {
+  if (!lastActivity) return { dot: 'signal-gray', label: 'New' };
+  const days = Math.floor((Date.now() - new Date(lastActivity)) / 86400000);
+  if (days <= 7) return { dot: 'signal-green', label: `${days}d` };
+  if (days <= 14) return { dot: 'signal-yellow', label: `${days}d` };
+  return { dot: 'signal-red', label: `${days}d` };
+}
+
+function getICP(name) {
+  const nonICP = ['Make', 'Tracxn'];
+  const moderate = ['revVana', 'Founderpath', 'MeetRecord'];
+  if (!name) return { label: '?', class: 'icp-moderate' };
+  if (nonICP.some(n => name.includes(n))) return { label: '⚠ Non-ICP', class: 'icp-weak' };
+  if (moderate.some(n => name.includes(n))) return { label: '~ Moderate', class: 'icp-moderate' };
+  return { label: '✓ Strong', class: 'icp-strong' };
+}
+
+function formatAmount(amount) {
+  if (!amount) return '—';
+  return '$' + Number(amount).toLocaleString();
+}
+
+// ============================================
+// RENDER PIPELINE
+// ============================================
+async function loadPipeline() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const deals = await query('pipeline_snapshot',
+      `?snapshot_date=eq.${today}&gtm360_record_type=eq.Live&order=amount.desc`);
+
+    const tbody = document.getElementById('pipelineTableBody');
+
+    if (!deals.length) {
+      // Try latest date if today has no data
+      const latest = await query('pipeline_snapshot',
+        `?gtm360_record_type=eq.Live&order=created_at.desc&limit=50`);
+
+      if (!latest.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">No pipeline data yet.<br>Run Make automation to sync HubSpot.</div></td></tr>`;
+        return;
+      }
+      renderPipelineRows(latest, tbody);
+      return;
+    }
+
+    renderPipelineRows(deals, tbody);
+  } catch(e) {
+    document.getElementById('pipelineTableBody').innerHTML =
+      `<tr><td colspan="6"><div class="empty-state">Error loading pipeline. Check Supabase connection.</div></td></tr>`;
+  }
+}
+
+function renderPipelineRows(deals, tbody) {
+  let totalAmount = 0;
+  let staleCount = 0;
+
+  tbody.innerHTML = deals.map(d => {
+    const stage = getStage(d.stage);
+    const signal = getSignal(d.last_activity_date);
+    const icp = getICP(d.company_name || d.deal_name);
+    const service = d.service_line || getServiceLine(d.deal_name);
+    const isStale = signal.dot === 'signal-red';
+    if (isStale) staleCount++;
+    if (d.amount) totalAmount += Number(d.amount);
+
+    return `
+      <tr class="${isStale ? 'stale' : ''}">
+        <td>
+          <div class="company-name">${d.company_name || d.deal_name || '—'}</div>
+          <div class="company-domain">${d.company_domain || ''}</div>
+        </td>
+        <td><span class="stage-pill ${stage.class}">${stage.label}</span></td>
+        <td><span class="badge badge-gray">${service}</span></td>
+        <td><span class="amount">${formatAmount(d.amount)}</span></td>
+        <td><span class="${icp.class}">${icp.label}</span></td>
+        <td>
+          <span class="signal-dot ${signal.dot}"></span>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--text3)">${signal.label}</span>
+        </td>
+      </tr>`;
+  }).join('');
+
+  // Update metrics
+  document.getElementById('pipelineTotal').textContent = '$' + totalAmount.toLocaleString();
+  document.getElementById('pipelineDeals').textContent = deals.length;
+  document.getElementById('staleCount').textContent = staleCount;
+  document.getElementById('pipelineSummaryBadge').textContent = `${deals.length} DEALS`;
+  document.getElementById('finPipeline').textContent = '$' + totalAmount.toLocaleString();
+
+  if (staleCount > 0) {
+    document.getElementById('pipelineSummaryBadge').className = 'badge badge-red';
+  } else {
+    document.getElementById('pipelineSummaryBadge').className = 'badge badge-green';
+  }
+}
+
+// ============================================
+// RENDER OKRs
+// ============================================
+async function loadOKRs() {
+  try {
+    const okrs = await query('okr_tracker', '?quarter=eq.Q2-2026&order=objective_number.asc,kr_number.asc');
+    const container = document.getElementById('okrBars');
+
+    // Group by objective
+    const objectives = {};
+    okrs.forEach(kr => {
+      if (!objectives[kr.objective_number]) {
+        objectives[kr.objective_number] = { text: kr.objective_text, krs: [] };
+      }
+      objectives[kr.objective_number].krs.push(kr);
+    });
+
+    container.innerHTML = Object.entries(objectives).map(([num, obj]) => {
+      const avgScore = obj.krs.reduce((sum, kr) => {
+        return sum + (kr.kr_target > 0 ? Math.min(kr.kr_current / kr.kr_target, 1) : 0);
+      }, 0) / obj.krs.length;
+
+      const pct = Math.round(avgScore * 100);
+      const fillClass = pct >= 70 ? 'okr-fill-green' : pct >= 40 ? 'okr-fill-yellow' : 'okr-fill-red';
+
+      return `
+        <div class="okr-item">
+          <div class="okr-header">
+            <div class="okr-label">O${num}: ${obj.text.substring(0, 30)}...</div>
+            <div class="okr-score">${pct}%</div>
+          </div>
+          <div class="okr-bar">
+            <div class="okr-fill ${fillClass}" style="width:${pct}%"></div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('okrBars').innerHTML = '<div class="empty-state">OKR data unavailable</div>';
+  }
+}
+
+// ============================================
+// RENDER DAILY BRIEF
+// ============================================
+async function loadDailyBrief() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const briefs = await query('daily_brief', `?brief_date=eq.${today}&order=generated_at.desc&limit=1`);
+
+    if (briefs.length) {
+      const brief = briefs[0];
+      if (brief.one_thing) document.getElementById('oneThingText').textContent = brief.one_thing;
+      if (brief.sams_flag) document.getElementById('samsFlag').textContent = brief.sams_flag;
+
+      if (brief.meetings && brief.meetings.length) {
+        document.getElementById('meetingsList').innerHTML = brief.meetings.map(m => `
+          <div class="meeting-item">
+            <div class="meeting-time">${m.time || 'TBD'}</div>
+            <div>
+              <div class="meeting-company">${m.company}</div>
+              <div class="meeting-stage">${m.stage || ''}</div>
+            </div>
+            <div class="prep-status">
+              <span class="badge ${m.prep_ready ? 'badge-green' : 'badge-yellow'}">${m.prep_ready ? 'PREP READY' : 'NO PREP'}</span>
+            </div>
+          </div>`).join('');
+      }
+
+      if (brief.emails_requiring_response && brief.emails_requiring_response.length) {
+        document.getElementById('emailsList').innerHTML = brief.emails_requiring_response.map(e => `
+          <div class="email-item">
+            <div>
+              <div class="email-company">${e.company || e.sender}</div>
+              <div class="email-subject">${e.subject}</div>
+            </div>
+            <span class="badge ${e.urgency === 'today' ? 'badge-red' : 'badge-yellow'}">${e.urgency}</span>
+          </div>`).join('');
+      }
+    }
+  } catch(e) {
+    // Brief not yet generated — show defaults
+  }
+}
+
+// ============================================
+// RENDER ESCALATIONS
+// ============================================
+async function loadEscalations() {
+  try {
+    const escalations = await query('escalations', '?status=eq.open&order=raised_at.desc');
+    if (escalations.length) {
+      const banner = document.getElementById('escalationBanner');
+      banner.classList.add('visible');
+      document.getElementById('escalationCount').textContent = `${escalations.length} OPEN`;
+      document.getElementById('escalationText').textContent =
+        escalations[0].description || 'Open escalations require your attention';
+    }
+  } catch(e) {}
+}
+
+// ============================================
+// RENDER ERRORS
+// ============================================
+async function loadErrors() {
+  try {
+    const errors = await query('error_log', '?status=eq.open');
+    const el = document.getElementById('errorCount');
+    el.textContent = `${errors.length} errors`;
+    if (errors.length > 0) el.classList.add('has-errors');
+  } catch(e) {}
+}
+
+// ============================================
+// LOAD ALL DATA
+// ============================================
+async function loadAll() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+  // Set date badge
+  document.getElementById('todayDate').textContent =
+    now.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+
+  await Promise.allSettled([
+    loadPipeline(),
+    loadOKRs(),
+    loadDailyBrief(),
+    loadEscalations(),
+    loadErrors()
+  ]);
+
+  document.getElementById('lastSync').textContent = timeStr;
+  document.getElementById('footerSync').textContent = `Last synced ${timeStr}`;
+}
+
+// ============================================
+// REFRESH BUTTON
+// ============================================
+async function refreshData() {
+  const btn = document.getElementById('refreshBtn');
+  btn.textContent = '↻ Refreshing...';
+  btn.classList.add('btn-loading');
+  await loadAll();
+  btn.textContent = '↻ Refresh';
+  btn.classList.remove('btn-loading');
+}
+
+// ============================================
+// START MEETING
+// ============================================
+function startMeeting() {
+  // Copy context to clipboard for Sam's project
+  const context = `STAFF MEETING — ${new Date().toLocaleDateString()}
+Pipeline: ${document.getElementById('pipelineTotal').textContent} across ${document.getElementById('pipelineDeals').textContent} deals
+Stale: ${document.getElementById('staleCount').textContent} deals need attention
+Sam's Flag: ${document.getElementById('samsFlag').textContent}
+
+Please run /today and start the staff meeting.`;
+
+  navigator.clipboard.writeText(context).then(() => {
+    alert('Meeting context copied to clipboard.\n\nNow open Sam\'s Claude Project and paste this to begin your staff meeting.');
+  });
+}
+
+// ============================================
+// INIT
+// ============================================
+loadAll();
+</script>
+</body>
+</html>
