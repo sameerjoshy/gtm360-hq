@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  body {
+    @apply bg-bg-base text-text-pri font-body;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-bdr rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-text-mut; }
+}
+
+@layer components {
+  /* Metric card */
+  .card {
+    @apply bg-bg-s1 border border-bdr rounded-lg;
+  }
+
+  /* Tag / badge */
+  .badge-orange {
+    @apply bg-gtm-orange/10 text-gtm-orange text-xxs font-mono px-1.5 py-0.5 rounded;
+  }
+  .badge-green {
+    @apply bg-ok/10 text-ok text-xxs font-mono px-1.5 py-0.5 rounded;
+  }
+  .badge-warn {
+    @apply bg-warn/10 text-warn text-xxs font-mono px-1.5 py-0.5 rounded;
+  }
+  .badge-danger {
+    @apply bg-danger/10 text-danger text-xxs font-mono px-1.5 py-0.5 rounded;
+  }
+  .badge-muted {
+    @apply bg-bg-s2 text-text-sec text-xxs font-mono px-1.5 py-0.5 rounded;
+  }
+
+  /* Sidebar nav item */
+  .nav-item {
+    @apply flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-text-sec
+           hover:text-text-pri hover:bg-bg-s2 transition-colors cursor-pointer;
+  }
+  .nav-item.active {
+    @apply text-text-pri bg-bg-s2 border-l-2 border-gtm-orange;
+  }
+
+  /* Agent chip */
+  .agent-chip {
+    @apply flex items-center gap-1 text-xxs font-mono text-text-mut;
+  }
+
+  /* Button variants */
+  .btn-primary {
+    @apply bg-gtm-orange hover:bg-gtm-amber text-white text-sm font-medium
+           px-3 py-1.5 rounded-md transition-colors;
+  }
+  .btn-ghost {
+    @apply text-text-sec hover:text-text-pri hover:bg-bg-s2 text-sm px-3 py-1.5 rounded-md transition-colors;
+  }
+
+  /* Input */
+  .input-base {
+    @apply bg-bg-s2 border border-bdr rounded-md text-sm text-text-pri
+           placeholder-text-mut px-3 py-2 outline-none
+           focus:border-gtm-orange/50 transition-colors w-full;
+  }
+
+  /* Progress bar */
+  .progress-track {
+    @apply h-1.5 bg-bg-s2 rounded-full overflow-hidden;
+  }
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-500;
+  }
+
+  /* Section label */
+  .section-label {
+    @apply text-xxs font-mono text-text-mut uppercase tracking-widest px-3 py-1;
+  }
+}
+
+/* Font size util not in default Tailwind */
+.text-xxs { font-size: 0.65rem; line-height: 1rem; }

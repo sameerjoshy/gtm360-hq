@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(not exist *)",
+      "Bash(mkdir -p \"D:/GTM-OS/gtm360-hq/.claude\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npx skills *)",
+      "Bash(npx vite *)",
+      "mcp__92b7b9ce-e577-4950-b5fa-d691ece11165__list_tables",
+      "mcp__92b7b9ce-e577-4950-b5fa-d691ece11165__execute_sql",
+      "Bash(npx wrangler *)",
+      "Bash(npm run *)"
+    ]
+  }
+}
