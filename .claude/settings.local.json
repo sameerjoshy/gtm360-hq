@@ -9,7 +9,9 @@
       "mcp__92b7b9ce-e577-4950-b5fa-d691ece11165__list_tables",
       "mcp__92b7b9ce-e577-4950-b5fa-d691ece11165__execute_sql",
       "Bash(npx wrangler *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
