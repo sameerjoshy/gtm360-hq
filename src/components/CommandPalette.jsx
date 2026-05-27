@@ -68,6 +68,9 @@ export default function CommandPalette({ open, onClose }) {
             onChange={e => setQuery(e.target.value)}
             placeholder="Type a command or search companies..."
             className="flex-1 bg-transparent text-sm text-text-pri placeholder-text-mut outline-none"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
           />
           <kbd className="text-xxs bg-bg-base px-1.5 py-0.5 rounded border border-bdr font-mono text-text-mut">ESC</kbd>
         </div>

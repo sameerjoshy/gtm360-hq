@@ -39,7 +39,7 @@ function NavItem({ path, icon: Icon, label, sub }) {
     >
       <Icon size={15} className="shrink-0" />
       <span className="flex-1">{label}</span>
-      {sub && <span className="text-xxs text-text-mut font-mono">{sub}</span>}
+      {sub && <span className="text-xs text-text-mut font-mono">{sub}</span>}
     </NavLink>
   )
 }

@@ -89,16 +89,16 @@ export default function ErrorsView() {
             <tbody className="divide-y divide-bdr">
               {filtered.map((err) => (
                 <tr key={err.id} className="hover:bg-bg-s2 transition-colors">
-                  <td className="px-4 py-3 font-mono text-xxs text-text-mut whitespace-nowrap">
+                  <td className="px-4 py-3.5 font-mono text-xs text-text-mut whitespace-nowrap">
                     {err.error_time ? new Date(err.error_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
                   </td>
-                  <td className="px-4 py-3 text-text-sec whitespace-nowrap">{err.agent_name || '—'}</td>
-                  <td className="px-4 py-3 text-text-sec whitespace-nowrap">{err.automation_name || '—'}</td>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-4 py-3.5 text-text-sec whitespace-nowrap">{err.agent_name || '—'}</td>
+                  <td className="px-4 py-3.5 text-text-sec whitespace-nowrap">{err.automation_name || '—'}</td>
+                  <td className="px-4 py-3.5 whitespace-nowrap">
                     <span className="badge-muted">{err.error_type || '—'}</span>
                   </td>
-                  <td className="px-4 py-3 text-text-sec max-w-xs truncate">{err.error_message || '—'}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3.5 text-text-sec max-w-xs truncate">{err.error_message || '—'}</td>
+                  <td className="px-4 py-3.5">
                     <span className={STATUS_BADGE[err.status] || 'badge-muted'}>{err.status}</span>
                   </td>
                 </tr>

@@ -40,9 +40,9 @@
     @apply bg-bg-s2 text-text-sec text-xxs font-mono px-1.5 py-0.5 rounded;
   }
 
-  /* Sidebar nav item */
+  /* Sidebar nav item — 12px/16px padding, 14px font */
   .nav-item {
-    @apply flex items-center gap-2.5 px-3 py-2 rounded-md text-sm text-text-sec
+    @apply flex items-center gap-2.5 px-4 py-3 rounded-md text-sm text-text-sec
            hover:text-text-pri hover:bg-bg-s2 transition-colors cursor-pointer;
   }
   .nav-item.active {
@@ -78,11 +78,14 @@
     @apply h-full rounded-full transition-all duration-500;
   }
 
-  /* Section label */
+  /* Section label — 13px, 2px letter-spacing */
   .section-label {
-    @apply text-xxs font-mono text-text-mut uppercase tracking-widest px-3 py-1;
+    @apply text-xs font-mono text-text-mut uppercase px-4 py-1;
+    letter-spacing: 2px;
+  }
+
+  /* Table row standard height (min 48px via py-3) */
+  .tr-base td {
+    @apply py-3;
   }
 }
-
-/* Font size util not in default Tailwind */
-.text-xxs { font-size: 0.65rem; line-height: 1rem; }

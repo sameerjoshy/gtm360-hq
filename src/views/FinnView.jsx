@@ -213,6 +213,9 @@ export default function FinnView() {
         </div>
         <div className="flex-1" />
         {isStreaming && <Loader2 size={13} className="text-gtm-orange animate-spin" />}
+        <span className="text-xxs font-mono text-text-mut bg-bg-s2 border border-bdr px-2 py-0.5 rounded">
+          Demo Data
+        </span>
       </div>
 
       {/* Metrics */}
@@ -253,13 +256,13 @@ export default function FinnView() {
                     const cfg = INV_STATUS[inv.status] || INV_STATUS.draft
                     return (
                       <tr key={i} className="hover:bg-bg-s2 transition-colors">
-                        <td className="py-2.5 pr-4 text-text-pri font-medium">{inv.client_name}</td>
-                        <td className="py-2.5 pr-4 text-text-sec">{inv.service_line}</td>
-                        <td className="py-2.5 pr-4 font-mono text-text-pri">{fmt$(inv.amount)}</td>
-                        <td className="py-2.5 pr-4 font-mono text-text-sec text-xxs">
+                        <td className="py-3.5 pr-4 text-text-pri font-medium">{inv.client_name}</td>
+                        <td className="py-3.5 pr-4 text-text-sec">{inv.service_line}</td>
+                        <td className="py-3.5 pr-4 font-mono text-text-pri">{fmt$(inv.amount)}</td>
+                        <td className="py-3.5 pr-4 font-mono text-text-sec text-xs">
                           {inv.due_date || '—'}
                         </td>
-                        <td className="py-2.5">
+                        <td className="py-3.5">
                           <span className={cfg.badge}>{inv.status}</span>
                         </td>
                       </tr>

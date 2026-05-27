@@ -138,7 +138,9 @@ export default function OKRsView() {
                             <span className="text-xxs font-mono text-text-mut w-6 shrink-0">KR{kr.kr_number}</span>
                             <span className="text-xs text-text-sec flex-1">{kr.kr_text}</span>
                             <span className="text-xxs font-mono text-text-sec shrink-0">
-                              {kr.kr_current} / {kr.kr_target}
+                              {/brief|daily/i.test(kr.kr_text)
+                                ? `${kr.kr_current} sessions`
+                                : `${kr.kr_current} / ${kr.kr_target}`}
                             </span>
                             <span className={`text-xxs font-mono shrink-0 w-8 text-right ${
                               pct === 100 ? 'text-ok' : pct >= 60 ? 'text-warn' : 'text-danger'

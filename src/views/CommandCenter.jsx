@@ -36,8 +36,8 @@ function MetricCard({ label, value, sub, color, onClick }) {
       <div className={`font-display text-2xl tracking-wide transition-transform group-hover:translate-x-0.5 ${color || 'text-text-pri'}`}>
         {value}
       </div>
-      <div className="text-xs text-text-sec mt-0.5">{label}</div>
-      {sub && <div className="text-xxs text-text-mut font-mono mt-0.5">{sub}</div>}
+      <div className="text-sm text-text-sec mt-0.5">{label}</div>
+      {sub && <div className="text-xs text-text-mut font-mono mt-0.5">{sub}</div>}
     </button>
   )
 }
@@ -106,11 +106,22 @@ function PanelHead({ title, nav, onClick }) {
 }
 
 // ─── Safe JSONB → array helper ───────────────────────────────────────────────
-// Supabase JSONB columns may come back as null, [], or {} depending on how they
-// were inserted. This normalises all three to a plain JS array.
+// Supabase JSONB columns may come back as:
+//   null, [], {}, a plain JS array, or a JSON string (sometimes double-encoded).
+// This normalises all cases to a plain JS array.
 function toArr(val) {
   if (!val) return []
   if (Array.isArray(val)) return val
+  if (typeof val === 'string') {
+    try {
+      let parsed = JSON.parse(val)
+      // Handle double-encoded strings: "\"[...]\"" → parse again
+      if (typeof parsed === 'string') parsed = JSON.parse(parsed)
+      if (Array.isArray(parsed)) return parsed
+      if (parsed && typeof parsed === 'object') return Object.values(parsed)
+    } catch { /* fall through */ }
+    return []
+  }
   if (typeof val === 'object') return Object.values(val)
   return []
 }
@@ -477,9 +488,9 @@ export default function CommandCenter() {
       {/* ── SAM'S FLAG ── */}
       {brief?.sams_flag && (
         <div className="card p-4 border-l-4 border-danger flex items-start gap-3">
-          <Flag size={14} className="text-danger shrink-0 mt-0.5" />
+          <Flag size={14} className="text-danger-soft shrink-0 mt-0.5" />
           <div>
-            <div className="text-xxs font-mono text-danger uppercase tracking-widest mb-1.5">
+            <div className="text-xxs font-mono text-danger-soft uppercase tracking-widest mb-1.5">
               Sam's Flag
             </div>
             <p className="text-sm text-text-pri leading-relaxed">{brief.sams_flag}</p>

@@ -267,7 +267,9 @@ export default function OlaView() {
                             <div className="progress-fill" style={{ width: `${pct}%`, background: st.bar }} />
                           </div>
                           <span className="text-xxs font-mono text-text-mut w-16 text-right shrink-0">
-                            {kr.kr_current}/{kr.kr_target}
+                            {/brief|daily/i.test(kr.kr_text)
+                              ? `${kr.kr_current} sessions`
+                              : `${kr.kr_current}/${kr.kr_target}`}
                           </span>
                         </div>
                       )

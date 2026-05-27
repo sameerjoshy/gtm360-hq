@@ -450,24 +450,27 @@ export default function RexView() {
                     onClick={() => handleSelect(d)}
                     className={`
                       w-full grid grid-cols-[1fr_80px_60px_60px] gap-2 items-center
-                      px-4 py-2.5 text-left transition-colors border-b border-bdr/40
+                      px-4 py-3 text-left transition-colors border-b border-bdr/40
                       ${isActive
                         ? 'bg-bg-s2 border-l-2 border-l-gtm-orange'
                         : 'hover:bg-bg-s2/60 border-l-2 border-l-transparent'}
                     `}
                   >
                     <div className="min-w-0">
-                      <div className="text-xs text-text-pri font-medium truncate">{getCompanyName(d)}</div>
-                      <div className="text-xxs text-text-mut font-mono truncate">{d.service_line}</div>
+                      <div className="text-sm text-text-pri font-medium truncate">{getCompanyName(d)}</div>
+                      <div className="text-xs text-text-mut font-mono truncate">{d.service_line}</div>
                     </div>
                     <StageBadge stage={d.stage} />
-                    <span className="text-xs font-mono text-text-sec">{fmt$(d.amount)}</span>
+                    <span className="text-sm font-mono text-text-sec">{fmt$(d.amount)}</span>
                     <div className="flex items-center gap-1">
                       {icp && (
                         <span
                           className="w-1.5 h-1.5 rounded-full shrink-0"
                           style={{ background: icp.dot }}
                         />
+                      )}
+                      {d.icp_fit === 'Non-ICP' && (
+                        <span className="text-danger text-xxs leading-none" title="Non-ICP">⚠</span>
                       )}
                       <SignalDot signal={d.signal} />
                     </div>
@@ -527,8 +530,16 @@ export default function RexView() {
                 {/* Detail fields */}
                 <div className="grid grid-cols-3 gap-x-6 gap-y-1.5 mt-3">
                   <DetailRow icon={ArrowRight}    label="Stage"   value={STAGE_LABELS[selected.stage] || selected.stage} mono />
-                  <DetailRow icon={Briefcase}     label="Service" value={selected.service_line} mono />
-                  <DetailRow icon={CalendarDays}  label="Close"   value={selected.close_date} mono />
+                  <DetailRow icon={Briefcase}     label="Service" value={
+                    selected.service_line
+                      ? `${selected.service_line}${SERVICE_LABELS[selected.service_line] ? ` — ${SERVICE_LABELS[selected.service_line]}` : ''}`
+                      : null
+                  } mono />
+                  <DetailRow icon={CalendarDays}  label="Close"   value={
+                    selected.close_date
+                      ? new Date(selected.close_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                      : null
+                  } mono />
                   <DetailRow icon={User}          label="Contact" value={selected.contact_name} />
                   <DetailRow icon={DollarSign}    label="Amount"  value={fmt$(selected.amount)} mono />
                   <DetailRow icon={Target}        label="Signal"  value={selected.signal} mono />
