@@ -12,7 +12,7 @@ GTM360 context:
 • Content: Raw observations → drafted posts → published. Aria feeds content_queue weekly.
 • Finance: Invoice tracking, retainer management
 • OKR tracking: 3 objectives, 9 KRs, Q2 2026
-• Aria: monitors Reddit (r/sales, r/startups, r/SaaS, r/entrepreneur, r/B2Bmarketing, r/revops) + Perplexity. Runs Monday 7:00 AM IST. Writes to trend_reports table and content_queue (status: raw, source: Aria).
+• Aria: monitors Reddit (r/sales, r/startups, r/SaaS, r/entrepreneur, r/B2Bmarketing, r/revops) via public JSON + Claude web_search. Runs Monday 7:00 AM IST. Writes to trend_reports table and content_queue (status: raw, source: Aria).
 
 /okr — Full OKR dashboard with status, velocity, and recommendations
 /health — System health: agents, automations, integrations, data quality
@@ -369,7 +369,7 @@ export default function OlaView() {
                 ['DB',       'Supabase (Postgres)',   'Data'],
                 ['AI',       'Claude Opus 4.7',       'Agents'],
                 ['Intel',    'Apollo.io',             'People data'],
-                ['Trends',   'Reddit + Perplexity',   'Aria signals'],
+                ['Trends',   'Reddit + web_search',   'Aria signals'],
                 ['Frontend', 'React + Vite',          'HQ Dashboard'],
                 ['Hosting',  'Cloudflare Pages',      'Deploy'],
               ].map(([cat, tool, use]) => (
