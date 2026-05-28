@@ -1,7 +1,7 @@
 import { Flag, ChevronRight, Circle, Clock, FileText } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store'
-import { fmt$, getCompanyName } from '../lib/supabase'
+import { fmt$, getCompanyName, STAGE_LABELS } from '../lib/supabase'
 
 // ─── Skeleton block ───────────────────────────────────────────────────────────
 function Skel({ className = '' }) {
@@ -37,7 +37,7 @@ function MetricCard({ label, value, sub, color, onClick }) {
         {value}
       </div>
       <div className="text-sm text-text-sec mt-0.5">{label}</div>
-      {sub && <div className="text-xs text-text-mut font-mono mt-0.5">{sub}</div>}
+      {sub && <div className="text-sm text-text-mut font-mono mt-0.5">{sub}</div>}
     </button>
   )
 }
@@ -179,7 +179,7 @@ export default function CommandCenter() {
 
       {/* ── ONE THING ── */}
       {brief ? (
-        <div className="card p-4 border-l-4 border-gtm-orange">
+        <div className="card p-5 border-l-4 border-gtm-orange">
           <div className="flex items-start gap-6">
 
             {/* Brief text */}
@@ -218,7 +218,7 @@ export default function CommandCenter() {
           </div>
         </div>
       ) : (
-        <div className="card p-4 border-l-4 border-bdr">
+        <div className="card p-5 border-l-4 border-bdr">
           <div className="text-xs text-text-mut">
             No brief loaded. Navigate to Sam and run <span className="font-mono text-gtm-orange">/today</span> to generate today's brief.
           </div>
@@ -268,13 +268,14 @@ export default function CommandCenter() {
               <button
                 key={i}
                 onClick={() => navigate('/rex')}
-                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-bg-s2 text-left transition-colors cursor-pointer"
+                className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-bg-s2 text-left transition-colors cursor-pointer min-h-[44px]"
               >
                 <IcpDot   fit={d.icp_fit} />
                 <SignalPip signal={d.signal} />
                 <span className="text-xs text-text-pri flex-1 truncate">{getCompanyName(d)}</span>
-                <span className="badge-muted mr-1">{d.service_line}</span>
-                <span className="text-xs font-mono text-text-sec">{fmt$(d.amount)}</span>
+                <span className="text-xxs font-mono text-text-mut shrink-0">{STAGE_LABELS[d.stage] || d.stage}</span>
+                <span className="badge-muted">{d.service_line}</span>
+                <span className="text-xs font-mono text-text-sec shrink-0">{fmt$(d.amount)}</span>
               </button>
             ))}
             {deals.length > 6 && (
@@ -487,13 +488,13 @@ export default function CommandCenter() {
 
       {/* ── SAM'S FLAG ── */}
       {brief?.sams_flag && (
-        <div className="card p-4 border-l-4 border-danger flex items-start gap-3">
+        <div className="card p-5 border-l-4 border-danger flex items-start gap-3">
           <Flag size={14} className="text-danger-soft shrink-0 mt-0.5" />
           <div>
             <div className="text-xxs font-mono text-danger-soft uppercase tracking-widest mb-1.5">
               Sam's Flag
             </div>
-            <p className="text-sm text-text-pri leading-relaxed">{brief.sams_flag}</p>
+            <p className="text-base text-text-pri leading-relaxed">{brief.sams_flag}</p>
           </div>
         </div>
       )}

@@ -20,7 +20,9 @@
       "Bash(git push *)",
       "Bash(git fetch *)",
       "Bash(git commit *)",
-      "Bash(gh pr *)"
+      "Bash(gh pr *)",
+      "Bash(git checkout *)",
+      "Bash(git branch *)"
     ]
   }
 }
