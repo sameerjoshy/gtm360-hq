@@ -399,6 +399,17 @@ export default function CommandCenter() {
         {/* Content Queue (Andy) */}
         <div className="card p-0 overflow-hidden">
           <PanelHead title="Content Queue" nav="Andy" onClick={() => navigate('/andy')} />
+          {(() => {
+            const ariaCount = content.filter(c => c.observation_source?.startsWith('Aria')).length
+            return ariaCount > 0 ? (
+              <div className="px-4 py-1.5 border-b border-bdr bg-bg-s2/50 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-gtm-orange shrink-0" />
+                <span className="text-xxs font-mono text-text-mut">
+                  {ariaCount} new observation{ariaCount !== 1 ? 's' : ''} from Aria this week
+                </span>
+              </div>
+            ) : null
+          })()}
           {content.length === 0 ? (
             <div className="px-4 py-6 text-xs text-text-mut text-center">
               No content items. Capture an observation in Andy.
