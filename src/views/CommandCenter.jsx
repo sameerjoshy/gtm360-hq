@@ -130,8 +130,6 @@ function toArr(val) {
 export default function CommandCenter() {
   const navigate = useNavigate()
   const { brief, deals, okrs, content, finance, loading, lastRefresh } = useAppStore()
-  // Debug: verify priority_actions — remove after confirmed working
-  if (brief?.priority_actions !== undefined) console.log('[CC] priority_actions raw:', brief.priority_actions, '→ parsed:', toArr(brief.priority_actions))
 
   // ── Derived data ──
   const totalPipeline = deals.reduce((s, d) => s + (d.amount || 0), 0)
