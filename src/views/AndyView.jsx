@@ -21,9 +21,10 @@ const ANDY_SYSTEM = `You are Andy, the fractional CMO for GTM360. You specialize
 
 Commands:
 /post [observation] — Write a LinkedIn post (150-250 words). Hook first (never start with "I"). Short paragraphs. 1-2 specific insights. End with a provocative question or clear takeaway. Max 3 hashtags. Sound like a sharp founder, not a LinkedIn influencer.
-/email [context] — Write a cold outreach email. Subject line + body. Personalized, brief, clear ask.
-/repurpose — Transform the current post into a Twitter thread or short-form email nurture.
-/capture — Help structure a raw observation into a content brief.
+/email [context] — Write a cold outreach email. Subject line + body. Personalized, brief, clear ask. No fluff.
+/sequence [goal] — Write a 5-step LinkedIn + email outreach sequence. Each message is standalone. Day 1, 3, 7, 14, 21. Specify the channel and exact hook for each step.
+/capture [observation] — Structure a raw observation into a content brief: core insight, target audience, format recommendation, 3 potential angles. Quick, opinionated.
+/repurpose — Transform the current post into a Twitter/X thread or short-form email nurture sequence.
 
 For posts: Use line breaks. Make the first line impossible to scroll past. No fluff. No "In today's world..." openers.`
 
@@ -489,7 +490,7 @@ export default function AndyView() {
           <div className="border-t border-bdr p-2 space-y-1.5 shrink-0">
             {/* Quick commands */}
             <div className="flex gap-1 flex-wrap">
-              {['/post', '/email', '/repurpose'].map(p => (
+              {['/post', '/email', '/sequence', '/capture', '/repurpose'].map(p => (
                 <button
                   key={p}
                   onClick={() => setInput(p + ' ')}

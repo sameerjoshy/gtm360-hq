@@ -334,7 +334,7 @@ export default function OlaView() {
                 ['Errors Open',   '0',     'text-ok',         CheckCircle],
                 ['Supabase',      'Live',   'text-ok',         Circle     ],
                 ['HubSpot Sync',  'Live',   'text-ok',         Circle     ],
-                ['API Keys',      '1 set',  'text-text-sec',   Circle     ],
+                ['API Keys',      '2 active', 'text-ok',        CheckCircle],
               ].map(([label, val, color, Icon]) => (
                 <div key={label} className="card px-3 py-2 flex items-center gap-2">
                   <Icon size={10} className={`${color} shrink-0`} />
@@ -355,6 +355,7 @@ export default function OlaView() {
                 ['CRM',      'HubSpot',              'Sales'],
                 ['DB',       'Supabase (Postgres)',   'Data'],
                 ['AI',       'Claude Opus 4.7',       'Agents'],
+                ['Intel',    'Apollo.io',             'People data'],
                 ['Frontend', 'React + Vite',          'HQ Dashboard'],
                 ['Hosting',  'Cloudflare Pages',      'Deploy'],
               ].map(([cat, tool, use]) => (
@@ -408,7 +409,7 @@ export default function OlaView() {
 
           <div className="border-t border-bdr p-2 space-y-1.5 shrink-0">
             <div className="flex gap-1 flex-wrap">
-              {['/okr', '/health', '/tools', '/weekly'].map(p => (
+              {['/okr', '/health', '/tools', '/automate', '/weekly'].map(p => (
                 <button
                   key={p}
                   onClick={() => setInput(p + ' ')}

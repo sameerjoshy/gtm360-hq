@@ -78,6 +78,68 @@ Give me exactly:
 Be as specific as possible to ${co}.`
 }
 
+function buildCampaignPrompt(deal) {
+  const co = getCompanyName(deal)
+  return `Outreach campaign design for ${co}.
+
+Deal: ${deal.service_line} · ${fmt$(deal.amount)} · ICP ${deal.icp_fit || 'unknown'}
+Stage: ${STAGE_LABELS[deal.stage] || deal.stage}
+Contact: ${deal.contact_name || 'unknown'}${deal.contact_email ? ` <${deal.contact_email}>` : ''}
+Domain: ${deal.company_domain || 'unknown'}
+
+Design a 30-day outreach campaign:
+
+## Channel Strategy
+Which channels and why — LinkedIn, email, phone, event, referral.
+
+## Sequence
+Day 1, 3, 7, 14, 21, 30 — specific action + exact hook for each touchpoint. No generic templates.
+
+## Personalization Angles
+What do I lead with and why. What's the most compelling entry point for ${deal.contact_name || 'this contact'}.
+
+## Breakout Hook
+The single message most likely to get a response. Write it verbatim.
+
+## Success Signals
+What actions tell me this deal is advancing to the next stage.`
+}
+
+function buildIcpPrompt(deal) {
+  const co = getCompanyName(deal)
+  return `ICP assessment for ${co}.
+
+Current data:
+- ICP fit: ${deal.icp_fit || 'unknown'}${deal.icp_score ? ` · Score ${deal.icp_score}/10` : ''}
+- Service: ${deal.service_line}
+- Stage: ${STAGE_LABELS[deal.stage] || deal.stage}
+- Domain: ${deal.company_domain || 'unknown'}
+- Contact: ${deal.contact_name || 'unknown'}
+
+GTM-360 ICP definition:
+Primary: Early-stage B2B founders (Seed–B, 10–150 employees, $1M–$15M ARR)
+Secondary: Scale-up CROs (100–500 employees, $15M–$100M ARR)
+Vertical: B2B SaaS and B2B Services only. No B2C.
+Entry: GTM Diagnostic (proof of value first)
+
+Run a full ICP assessment:
+
+## ICP Fit Score: [X/10]
+Score with clear justification. Be brutal.
+
+## Fit Dimensions
+Company size · Revenue stage · GTM maturity · Decision-maker access · Budget signal
+
+## Service Line Fit
+Which GTM-360 offering (DIAG / FCRO / ROPS) is the right entry and why. Sequence if multiple apply.
+
+## Disqualifiers
+What could kill this deal. Flag anything that makes this non-ICP.
+
+## Verdict
+Strong / Moderate / Weak — and the single most important next action.`
+}
+
 // ─── Streaming hook (raw fetch + SSE) ────────────────────────────────────────
 function useResearch() {
   const [output, setOutput]        = useState('')
@@ -101,7 +163,13 @@ function useResearch() {
 
     const controller = new AbortController()
     abortRef.current = controller
-    const prompt = cmd === '/research' ? buildResearchPrompt(deal) : buildPrepPrompt(deal)
+    const builders = {
+      '/research': buildResearchPrompt,
+      '/prep':     buildPrepPrompt,
+      '/campaign': buildCampaignPrompt,
+      '/icp':      buildIcpPrompt,
+    }
+    const prompt = (builders[cmd] || buildResearchPrompt)(deal)
 
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -652,6 +720,18 @@ export default function RexView() {
                   <ChevronRight size={11} />
                   Prep
                 </button>
+                <button
+                  onClick={() => handleCommand('/campaign')}
+                  className="btn-ghost text-xs border border-bdr flex items-center gap-1.5"
+                >
+                  Campaign
+                </button>
+                <button
+                  onClick={() => handleCommand('/icp')}
+                  className="btn-ghost text-xs border border-bdr flex items-center gap-1.5"
+                >
+                  ICP
+                </button>
               </>
             )}
           </div>
@@ -950,12 +1030,14 @@ export default function RexView() {
                         Ready to research <span className="text-text-pri">{getCompanyName(selected)}</span>
                       </div>
                       <div className="text-xs text-text-mut mt-1">
-                        <span className="font-mono text-gtm-orange">⚡ Intel</span> for account intelligence ·{' '}
-                        <span className="font-mono text-accent">Research</span> for a quick brief ·{' '}
-                        <span className="font-mono text-text-sec">Prep</span> for call prep
+                        <span className="font-mono text-gtm-orange">⚡ Intel</span> · {' '}
+                        <span className="font-mono text-accent">Research</span> · {' '}
+                        <span className="font-mono text-text-sec">Prep</span> · {' '}
+                        <span className="font-mono text-text-sec">Campaign</span> · {' '}
+                        <span className="font-mono text-text-sec">ICP</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2 mt-2 flex-wrap justify-center">
                       <button onClick={handleIntel} className="btn-orange text-xs flex items-center gap-1.5">
                         <Zap size={11} /> ⚡ Intel
                       </button>
@@ -964,6 +1046,12 @@ export default function RexView() {
                       </button>
                       <button onClick={() => handleCommand('/prep')} className="btn-ghost text-xs border border-bdr flex items-center gap-1.5">
                         <ChevronRight size={11} /> Prep
+                      </button>
+                      <button onClick={() => handleCommand('/campaign')} className="btn-ghost text-xs border border-bdr flex items-center gap-1.5">
+                        Campaign
+                      </button>
+                      <button onClick={() => handleCommand('/icp')} className="btn-ghost text-xs border border-bdr flex items-center gap-1.5">
+                        ICP
                       </button>
                     </div>
                   </div>
