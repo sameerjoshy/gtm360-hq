@@ -11,7 +11,10 @@
       "Bash(npx wrangler *)",
       "Bash(npm run *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(python3 \"C:\\\\Users\\\\DELL\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"B2B SaaS revenue ops dashboard operator minimal light mode professional\" --design-system -p \"GTM360 HQ\" -f markdown)",
+      "Bash(powershell.exe -NoProfile -Command '[System.Environment]::GetEnvironmentVariable\\(\"CLOUDFLARE_API_TOKEN\",\"User\"\\)')",
+      "PowerShell($token = [System.Environment]::GetEnvironmentVariable\\(\"CLOUDFLARE_API_TOKEN\", \"User\"\\); $env:CLOUDFLARE_API_TOKEN = $token; cd \"D:\\\\GTM-OS\\\\gtm360-hq\"; npx wrangler pages deploy dist --project-name=gtm360-hq --branch=main 2>&1)"
     ]
   }
 }
