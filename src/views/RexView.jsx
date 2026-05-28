@@ -491,12 +491,15 @@ export default function RexView() {
                 <div className="flex items-start justify-between gap-4">
                   {/* Identity */}
                   <div>
-                    <div className="flex items-baseline gap-2">
+                    <div className="flex items-baseline gap-2 flex-wrap">
                       <span className="font-display text-2xl text-text-pri tracking-wide leading-none">
                         {getCompanyName(selected)}
                       </span>
                       {selected.icp_fit && (
                         <IcpBadge fit={selected.icp_fit} />
+                      )}
+                      {selected.service_line && (
+                        <span className="badge-indigo">{selected.service_line}</span>
                       )}
                     </div>
                     {selected.company_domain && (
