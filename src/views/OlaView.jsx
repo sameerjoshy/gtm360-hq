@@ -1,17 +1,18 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAppStore } from '../store'
-import { Settings2, Send, Loader2, Circle, Zap, AlertTriangle, CheckCircle } from 'lucide-react'
+import { Settings2, Send, Loader2, Circle, Zap, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react'
 
 // ─── Ola system prompt ─────────────────────────────────────────────────────────
 const OLA_SYSTEM = `You are Ola, the fractional COO for GTM360. You manage OKR tracking, system health, automation operations, and revenue operations infrastructure. You keep the GTM360 OS running efficiently and flag operational risks early.
 
 GTM360 context:
-• 5 AI agents: Sam (CoS), Rex (CRO), Andy (CMO), Finn (CFO), Ola (COO)
+• 6 AI agents: Sam (CoS), Rex (CRO), Andy (CMO), Finn (CFO), Ola (COO), Aria (Trend Researcher)
 • Pipeline: HubSpot → Supabase sync
-• Content: Raw observations → drafted posts → published
+• Content: Raw observations → drafted posts → published. Aria feeds content_queue weekly.
 • Finance: Invoice tracking, retainer management
 • OKR tracking: 3 objectives, 9 KRs, Q2 2026
+• Aria: monitors Reddit (r/sales, r/startups, r/SaaS, r/entrepreneur, r/B2Bmarketing, r/revops) + Perplexity. Runs Monday 7:00 AM IST. Writes to trend_reports table and content_queue (status: raw, source: Aria).
 
 /okr — Full OKR dashboard with status, velocity, and recommendations
 /health — System health: agents, automations, integrations, data quality
@@ -22,12 +23,13 @@ GTM360 context:
 Be operational and specific. Flag blockers. Give clear next actions.`
 
 const AUTOMATIONS = [
-  { name: 'HubSpot → Pipeline Sync', status: 'ok',   time: '6:00 AM', freq: 'daily'  },
-  { name: 'Stale Deal Checker',       status: 'ok',   time: '6:15 AM', freq: 'daily'  },
-  { name: 'Sam Morning Brief',        status: 'ok',   time: '6:30 AM', freq: 'daily'  },
-  { name: 'OKR Pulse',               status: 'ok',   time: '6:30 AM', freq: 'daily'  },
+  { name: 'HubSpot → Pipeline Sync', status: 'ok',   time: '6:00 AM',     freq: 'daily'  },
+  { name: 'Stale Deal Checker',       status: 'ok',   time: '6:15 AM',     freq: 'daily'  },
+  { name: 'Sam Morning Brief',        status: 'ok',   time: '6:30 AM',     freq: 'daily'  },
+  { name: 'OKR Pulse',               status: 'ok',   time: '6:30 AM',     freq: 'daily'  },
   { name: 'Invoice Monitor',          status: 'warn', time: 'Mon 6:45 AM', freq: 'weekly' },
-  { name: 'Content QC',              status: 'ok',   time: 'on demand', freq: 'manual' },
+  { name: 'Aria Trend Research',      status: 'ok',   time: 'Mon 7:00 AM', freq: 'weekly' },
+  { name: 'Content QC',              status: 'ok',   time: 'on demand',   freq: 'manual' },
 ]
 
 // ─── Streaming chat hook ──────────────────────────────────────────────────────
@@ -169,11 +171,12 @@ function StatusDot({ status }) {
 
 // ─── Main view ────────────────────────────────────────────────────────────────
 export default function OlaView() {
-  const [okrs, setOkrs]   = useState([])
-  const [input, setInput] = useState('')
-  const chatEndRef        = useRef(null)
-  const deals             = useAppStore(s => s.deals)
-  const lastRefresh       = useAppStore(s => s.lastRefresh)
+  const [okrs, setOkrs]             = useState([])
+  const [input, setInput]           = useState('')
+  const [trendReport, setTrendReport] = useState(null)
+  const chatEndRef                  = useRef(null)
+  const deals                       = useAppStore(s => s.deals)
+  const lastRefresh                 = useAppStore(s => s.lastRefresh)
   const { messages, isStreaming, send, stop } = useOlaChat(okrs, deals)
 
   useEffect(() => {
@@ -183,6 +186,15 @@ export default function OlaView() {
       .order('objective_number')
       .order('kr_number')
       .then(({ data }) => setOkrs(data || []))
+  }, [])
+
+  useEffect(() => {
+    supabase
+      .from('trend_reports')
+      .select('week_of, emerging, crowded, gaps, raw_observations, generated_at')
+      .order('week_of', { ascending: false })
+      .limit(1)
+      .then(({ data }) => setTrendReport(data?.[0] || null))
   }, [])
 
   useEffect(() => {
@@ -293,11 +305,12 @@ export default function OlaView() {
             <div className="text-xxs font-mono text-text-mut uppercase tracking-widest mb-2">Agents</div>
             <div className="space-y-1.5">
               {[
-                { name: 'Sam', role: 'Chief of Staff', status: 'ok' },
-                { name: 'Rex', role: 'CRO',            status: 'ok' },
-                { name: 'Andy', role: 'CMO',           status: 'ok' },
-                { name: 'Finn', role: 'CFO',           status: 'ok' },
-                { name: 'Ola', role: 'COO',            status: 'ok' },
+                { name: 'Sam',  role: 'Chief of Staff',   status: 'ok' },
+                { name: 'Rex',  role: 'CRO',              status: 'ok' },
+                { name: 'Andy', role: 'CMO',              status: 'ok' },
+                { name: 'Finn', role: 'CFO',              status: 'ok' },
+                { name: 'Ola',  role: 'COO',              status: 'ok' },
+                { name: 'Aria', role: 'Trend Researcher', status: 'ok' },
               ].map(a => (
                 <div key={a.name} className="flex items-center gap-2.5 text-xs">
                   <StatusDot status={a.status} />
@@ -356,6 +369,7 @@ export default function OlaView() {
                 ['DB',       'Supabase (Postgres)',   'Data'],
                 ['AI',       'Claude Opus 4.7',       'Agents'],
                 ['Intel',    'Apollo.io',             'People data'],
+                ['Trends',   'Reddit + Perplexity',   'Aria signals'],
                 ['Frontend', 'React + Vite',          'HQ Dashboard'],
                 ['Hosting',  'Cloudflare Pages',      'Deploy'],
               ].map(([cat, tool, use]) => (
@@ -366,6 +380,43 @@ export default function OlaView() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Aria Trend Intel */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-2">
+              <TrendingUp size={10} className="text-gtm-orange" />
+              <div className="text-xxs font-mono text-text-mut uppercase tracking-widest">Aria Intel — Latest Report</div>
+            </div>
+            {trendReport ? (() => {
+              const emerging = Array.isArray(trendReport.emerging)         ? trendReport.emerging         : []
+              const crowded  = Array.isArray(trendReport.crowded)          ? trendReport.crowded          : []
+              const gaps     = Array.isArray(trendReport.gaps)             ? trendReport.gaps             : []
+              const obs      = Array.isArray(trendReport.raw_observations) ? trendReport.raw_observations : []
+              return (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="badge-green text-xxs">{emerging.length} emerging</span>
+                    <span className="badge-warn text-xxs">{crowded.length} crowded</span>
+                    <span className="badge-muted text-xxs">{gaps.length} gaps</span>
+                    <span className="badge-orange text-xxs">{obs.length} obs</span>
+                  </div>
+                  {emerging[0] && (
+                    <div className="text-xxs text-text-sec font-mono leading-relaxed">
+                      ▸ {emerging[0].topic}
+                    </div>
+                  )}
+                  <div className="text-xxs text-text-mut font-mono">
+                    Week of {trendReport.week_of} · {obs.length} → content queue
+                  </div>
+                </div>
+              )
+            })() : (
+              <div className="text-xxs text-text-mut font-mono leading-relaxed">
+                No report yet.<br />
+                Aria runs Monday 7:00 AM IST via Task Scheduler.
+              </div>
+            )}
           </div>
         </div>
 
