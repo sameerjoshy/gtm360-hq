@@ -31,16 +31,18 @@ export default function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-[200px] right-0 h-12 bg-bg-s1 border-b border-bdr z-10 flex items-center px-4 gap-3">
+      <header className="fixed top-0 left-[200px] right-0 h-12 bg-bg-s1 border-b border-bdr z-10 flex items-center px-5 gap-3"
+        style={{ boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05)' }}
+      >
 
         {/* Search trigger */}
         <button
           onClick={() => setCmdOpen(true)}
-          className="flex items-center gap-2 bg-bg-s2 border border-bdr rounded-md px-3 py-1.5 text-sm text-text-mut hover:border-gtm-orange/40 hover:text-text-sec transition-colors flex-1 max-w-sm cursor-pointer"
+          className="flex items-center gap-2 bg-bg-s2 border border-bdr rounded-lg px-3 py-1.5 text-sm text-text-mut hover:border-accent/40 hover:text-text-sec transition-all flex-1 max-w-sm cursor-pointer"
         >
-          <Search size={13} />
-          <span className="flex-1 text-left">Search or run command...</span>
-          <kbd className="text-xxs bg-bg-base px-1.5 py-0.5 rounded border border-bdr font-mono text-text-mut">⌘K</kbd>
+          <Search size={13} className="text-text-mut" />
+          <span className="flex-1 text-left text-sm">Search or run command...</span>
+          <kbd className="text-xxs bg-bg-s1 px-1.5 py-0.5 rounded border border-bdr font-mono text-text-mut">⌘K</kbd>
         </button>
 
         <div className="flex-1" />
@@ -57,28 +59,28 @@ export default function Header() {
           onClick={refresh}
           disabled={loading}
           title="Refresh all data"
-          className="btn-ghost p-1.5 rounded-md cursor-pointer disabled:opacity-50"
+          className="btn-ghost p-2 rounded-lg cursor-pointer disabled:opacity-50"
         >
-          <RefreshCw size={14} className={loading ? 'animate-spin text-gtm-orange' : ''} />
+          <RefreshCw size={14} className={loading ? 'animate-spin text-accent' : 'text-text-sec'} />
         </button>
 
         {/* Notifications */}
         <button
           onClick={() => setNotifOpen(true)}
           title="Open notifications"
-          className="relative btn-ghost p-1.5 rounded-md cursor-pointer"
+          className="relative btn-ghost p-2 rounded-lg cursor-pointer"
         >
-          <Bell size={14} />
+          <Bell size={14} className="text-text-sec" />
           {escalationCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-gtm-orange rounded-full text-xxs font-mono text-white flex items-center justify-center leading-none">
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-accent rounded-full text-xxs font-mono text-white flex items-center justify-center leading-none">
               {escalationCount}
             </span>
           )}
         </button>
 
         {/* Avatar */}
-        <div className="w-7 h-7 rounded-full bg-gtm-orange/20 border border-gtm-orange/40 flex items-center justify-center cursor-pointer hover:bg-gtm-orange/30 transition-colors">
-          <span className="text-xs font-display text-gtm-orange">SJ</span>
+        <div className="w-7 h-7 rounded-full bg-accent/10 border border-accent/25 flex items-center justify-center cursor-pointer hover:bg-accent/20 transition-colors">
+          <span className="text-xs font-display text-accent font-bold">SJ</span>
         </div>
 
       </header>

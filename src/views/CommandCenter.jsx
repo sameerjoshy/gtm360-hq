@@ -53,7 +53,7 @@ function Bar({ pct, color }) {
 
 // ─── ICP dot ─────────────────────────────────────────────────────────────────
 function IcpDot({ fit }) {
-  const c = { Strong: '#00E676', Moderate: '#FFD600', 'Non-ICP': '#FF1744' }
+  const c = { Strong: '#059669', Moderate: '#D97706', 'Non-ICP': '#EF4444' }
   return (
     <span
       className="w-1.5 h-1.5 rounded-full shrink-0 inline-block"
@@ -70,7 +70,7 @@ function SignalPip({ signal }) {
   return (
     <span
       className="w-1.5 h-1.5 rounded-full shrink-0 inline-block"
-      style={{ background: isWatch ? '#FFD600' : 'transparent' }}
+      style={{ background: isWatch ? '#D97706' : 'transparent' }}
       title={signal}
     />
   )
@@ -373,7 +373,7 @@ export default function CommandCenter() {
                       <span className="text-xxs font-mono text-text-mut w-5">O{o.n}</span>
                       <Bar
                         pct={o.pct}
-                        color={o.pct === 0 ? '#FF1744' : o.pct < 50 ? '#FFD600' : '#00E676'}
+                        color={o.pct === 0 ? '#EF4444' : o.pct < 50 ? '#D97706' : '#059669'}
                       />
                       <span className="text-xxs font-mono text-text-mut w-8 text-right">{o.pct}%</span>
                     </div>

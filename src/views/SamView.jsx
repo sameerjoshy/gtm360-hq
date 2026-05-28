@@ -282,7 +282,7 @@ export default function SamView() {
                           className="progress-fill"
                           style={{
                             width: `${o.pct}%`,
-                            background: o.pct === 0 ? '#FF1744' : o.pct < 50 ? '#FFD600' : '#00E676',
+                            background: o.pct === 0 ? '#EF4444' : o.pct < 50 ? '#D97706' : '#059669',
                           }}
                         />
                       </div>

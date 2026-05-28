@@ -199,10 +199,10 @@ export default function OlaView() {
     const target = o.krs.reduce((s, k) => s + Number(k.kr_target || 1), 0)
     const curr   = o.krs.reduce((s, k) => s + Number(k.kr_current || 0), 0)
     const pct    = target > 0 ? curr / target : 0
-    if (pct === 0)   return { label: 'Off Track', color: 'text-danger',      bar: '#FF1744', pct: 0   }
-    if (pct < 0.4)  return { label: 'At Risk',   color: 'text-warn',        bar: '#FFD600', pct: Math.round(pct * 100) }
+    if (pct === 0)   return { label: 'Off Track', color: 'text-danger',      bar: '#EF4444', pct: 0   }
+    if (pct < 0.4)  return { label: 'At Risk',   color: 'text-warn',        bar: '#D97706', pct: Math.round(pct * 100) }
     if (pct < 0.75) return { label: 'On Track',  color: 'text-gtm-orange',  bar: '#FF4D00', pct: Math.round(pct * 100) }
-    return               { label: 'Strong',     color: 'text-ok',          bar: '#00E676', pct: Math.round(pct * 100) }
+    return               { label: 'Strong',     color: 'text-ok',          bar: '#059669', pct: Math.round(pct * 100) }
   }
 
   const handleSend = () => {

@@ -9,9 +9,9 @@ const STATUS_BADGE = {
 }
 
 const BAR_COLOR = {
-  on_track:  '#00E676',
-  at_risk:   '#FFD600',
-  off_track: '#FF1744',
+  on_track:  '#059669',
+  at_risk:   '#D97706',
+  off_track: '#EF4444',
 }
 
 export default function OKRsView() {
@@ -74,7 +74,7 @@ export default function OKRsView() {
             className="progress-fill"
             style={{
               width: `${overallPct()}%`,
-              background: overallPct() < 40 ? '#FF1744' : overallPct() < 70 ? '#FFD600' : '#00E676',
+              background: overallPct() < 40 ? '#EF4444' : overallPct() < 70 ? '#D97706' : '#059669',
             }}
           />
         </div>

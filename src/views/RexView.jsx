@@ -10,9 +10,9 @@ import {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ICP_COLOR = {
-  Strong:    { dot: '#00E676', text: 'text-ok',      badge: 'badge-green'  },
-  Moderate:  { dot: '#FFD600', text: 'text-warn',     badge: 'badge-warn'   },
-  'Non-ICP': { dot: '#FF1744', text: 'text-danger',   badge: 'badge-danger' },
+  Strong:    { dot: '#059669', text: 'text-ok',      badge: 'badge-green'  },
+  Moderate:  { dot: '#D97706', text: 'text-warn',     badge: 'badge-warn'   },
+  'Non-ICP': { dot: '#EF4444', text: 'text-danger',   badge: 'badge-danger' },
 }
 
 const STAGE_COLOR = {
