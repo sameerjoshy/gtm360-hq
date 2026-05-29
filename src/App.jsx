@@ -9,6 +9,7 @@ import FinnView from './views/FinnView'
 import OlaView from './views/OlaView'
 import OKRsView from './views/OKRsView'
 import OzView from './views/OzView'
+import MemoView from './views/MemoView'
 import ErrorsView from './views/ErrorsView'
 import StubView from './views/StubView'
 
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="/finance"     element={<StubView title="Finance" />} />
             <Route path="/okrs"        element={<OKRsView />} />
             <Route path="/outreach"    element={<OzView />} />
+            <Route path="/memo"        element={<MemoView />} />
             <Route path="/automations" element={<StubView title="Automations" />} />
             <Route path="/errors"      element={<ErrorsView />} />
             <Route path="/settings"    element={<StubView title="Settings" />} />

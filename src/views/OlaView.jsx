@@ -7,13 +7,14 @@ import { Settings2, Send, Loader2, Circle, Zap, AlertTriangle, CheckCircle, Tren
 const OLA_SYSTEM = `You are Ola, the fractional COO for GTM360. You manage OKR tracking, system health, automation operations, and revenue operations infrastructure. You keep the GTM360 OS running efficiently and flag operational risks early.
 
 GTM360 context:
-• 7 AI agents: Sam (CoS), Rex (CRO), Andy (CMO), Finn (CFO), Ola (COO), Aria (Trend Researcher), Oz (Outreach Execution)
+• 8 AI agents: Sam (CoS), Rex (CRO), Andy (CMO), Finn (CFO), Ola (COO), Aria (Trend Researcher), Oz (Outreach Execution), Memo (Meeting Intel)
 • Pipeline: HubSpot → Supabase sync
 • Content: Raw observations → drafted posts → published. Aria feeds content_queue weekly.
 • Finance: Invoice tracking, retainer management
 • OKR tracking: 3 objectives, 9 KRs, Q2 2026
 • Aria: monitors Reddit + web via Claude web_search. Runs Monday 7:00 AM IST. Writes to trend_reports table and content_queue (status: raw, source: Aria).
 • Oz: Outreach execution agent. Generates 5-touch sequences from Rex intel. Human gate: nothing sends without explicit approval in the Outreach view.
+• Memo: Meeting Intel agent. Analyzes call transcripts and extracts commitments, buying signals, objections, next steps, stage recommendations, follow-up email drafts, CRM notes, and Sam brief updates. Human gate: approve before acting on any output.
 
 /okr — Full OKR dashboard with status, velocity, and recommendations
 /health — System health: agents, automations, integrations, data quality
@@ -332,6 +333,7 @@ export default function OlaView() {
                 { name: 'Ola',  role: 'COO',              status: 'ok' },
                 { name: 'Aria', role: 'Trend Researcher', status: 'ok' },
                 { name: 'Oz',   role: 'Outreach',         status: 'ok' },
+                { name: 'Memo', role: 'Meeting Intel',    status: 'ok' },
               ].map(a => (
                 <div key={a.name} className="flex items-center gap-2.5 text-xs">
                   <StatusDot status={a.status} />

@@ -3,15 +3,16 @@ import {
   LayoutDashboard, Mic, Briefcase, Megaphone,
   DollarSign, Settings2, BarChart2, FileText,
   TrendingUp, Target, Zap, AlertTriangle, Settings,
-  Circle, Send,
+  Circle, Send, ClipboardList,
 } from 'lucide-react'
 
 const AGENTS = [
-  { path: '/sam',  icon: Mic,        label: 'Sam',  sub: 'CoS' },
-  { path: '/rex',  icon: Briefcase,  label: 'Rex',  sub: 'CRO' },
-  { path: '/andy', icon: Megaphone,  label: 'Andy', sub: 'CMO' },
-  { path: '/finn', icon: DollarSign, label: 'Finn', sub: 'CFO' },
-  { path: '/ola',  icon: Settings2,  label: 'Ola',  sub: 'COO' },
+  { path: '/sam',  icon: Mic,           label: 'Sam',  sub: 'CoS' },
+  { path: '/rex',  icon: Briefcase,     label: 'Rex',  sub: 'CRO' },
+  { path: '/andy', icon: Megaphone,     label: 'Andy', sub: 'CMO' },
+  { path: '/finn', icon: DollarSign,    label: 'Finn', sub: 'CFO' },
+  { path: '/ola',  icon: Settings2,     label: 'Ola',  sub: 'COO' },
+  { path: '/memo', icon: ClipboardList, label: 'Memo', sub: 'Intel' },
 ]
 
 const WORKSPACE = [
@@ -28,7 +29,7 @@ const SYSTEM = [
   { path: '/settings',    icon: Settings,      label: 'Settings'    },
 ]
 
-const AGENT_STATUS = ['Sam', 'Rex', 'Andy', 'Finn', 'Ola']
+const AGENT_STATUS = ['Sam', 'Rex', 'Andy', 'Finn', 'Ola', 'Memo']
 
 function NavItem({ path, icon: Icon, label, sub }) {
   return (
