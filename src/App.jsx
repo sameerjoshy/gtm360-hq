@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
+import Landing from './pages/Landing'
 import CommandCenter from './views/CommandCenter'
 import SamView from './views/SamView'
 import RexView from './views/RexView'
@@ -13,29 +14,38 @@ import MemoView from './views/MemoView'
 import ErrorsView from './views/ErrorsView'
 import StubView from './views/StubView'
 
+function AppRoutes() {
+  return (
+    <Layout>
+      <Routes>
+        <Route path="/dashboard"   element={<CommandCenter />} />
+        <Route path="/sam"         element={<SamView />} />
+        <Route path="/rex"         element={<RexView />} />
+        <Route path="/andy"        element={<AndyView />} />
+        <Route path="/finn"        element={<FinnView />} />
+        <Route path="/ola"         element={<OlaView />} />
+        <Route path="/pipeline"    element={<StubView title="Pipeline" />} />
+        <Route path="/content"     element={<StubView title="Content Calendar" />} />
+        <Route path="/finance"     element={<StubView title="Finance" />} />
+        <Route path="/okrs"        element={<OKRsView />} />
+        <Route path="/outreach"    element={<OzView />} />
+        <Route path="/memo"        element={<MemoView />} />
+        <Route path="/automations" element={<StubView title="Automations" />} />
+        <Route path="/errors"      element={<ErrorsView />} />
+        <Route path="/settings"    element={<StubView title="Settings" />} />
+      </Routes>
+    </Layout>
+  )
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <ErrorBoundary>
-        <Layout>
-          <Routes>
-            <Route path="/"            element={<CommandCenter />} />
-            <Route path="/sam"         element={<SamView />} />
-            <Route path="/rex"         element={<RexView />} />
-            <Route path="/andy"        element={<AndyView />} />
-            <Route path="/finn"        element={<FinnView />} />
-            <Route path="/ola"         element={<OlaView />} />
-            <Route path="/pipeline"    element={<StubView title="Pipeline" />} />
-            <Route path="/content"     element={<StubView title="Content Calendar" />} />
-            <Route path="/finance"     element={<StubView title="Finance" />} />
-            <Route path="/okrs"        element={<OKRsView />} />
-            <Route path="/outreach"    element={<OzView />} />
-            <Route path="/memo"        element={<MemoView />} />
-            <Route path="/automations" element={<StubView title="Automations" />} />
-            <Route path="/errors"      element={<ErrorsView />} />
-            <Route path="/settings"    element={<StubView title="Settings" />} />
-          </Routes>
-        </Layout>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/*" element={<AppRoutes />} />
+        </Routes>
       </ErrorBoundary>
     </BrowserRouter>
   )
