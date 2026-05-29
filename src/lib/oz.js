@@ -305,11 +305,11 @@ export async function deleteCompanyDrafts(companyName) {
 async function logOutreachAction(action, touchId) {
   try {
     await supabase.from('automation_log').insert({
-      agent:     'Oz',
-      action:    `outreach_${action}`,
-      status:    'ok',
-      details:   { touch_id: touchId },
-      logged_at: new Date().toISOString(),
+      agent_name:      'Oz',
+      automation_name: `outreach_${action}`,
+      trigger_type:    'manual',
+      status:          'ok',
+      output_summary:  `touch_id: ${touchId}`,
     })
   } catch {
     // Non-fatal — audit log failure shouldn't block the UI action
