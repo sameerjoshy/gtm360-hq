@@ -3,11 +3,12 @@ import {
   supabase, fmt$, STAGE_LABELS, SERVICE_LABELS, getCompanyName,
 } from '../lib/supabase'
 import { generateIntel, saveIntelToSupabase } from '../lib/intel'
+import { generateOutreachSequence } from '../lib/oz'
 import {
   Briefcase, Search, Loader2, Square, AlertCircle,
   Globe, User, DollarSign, Target, Zap, Activity,
   ChevronRight, CalendarDays, ArrowRight,
-  Copy, CheckCircle, Database, Shield,
+  Copy, CheckCircle, Database, Shield, Send,
 } from 'lucide-react'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -569,6 +570,13 @@ export default function RexView() {
   const [savedToDb, setSavedToDb]       = useState(false)
   const intelAbortRef = useRef(null)
 
+  // Oz outreach state
+  const [ozSteps, setOzSteps]     = useState([])
+  const [ozLoading, setOzLoading] = useState(false)
+  const [ozDone, setOzDone]       = useState(false)
+  const [ozError, setOzError]     = useState(null)
+  const ozAbortRef = useRef(null)
+
   const outputRef = useRef(null)
 
   // ── Data load ──────────────────────────────────────────────────────────────
@@ -615,6 +623,30 @@ export default function RexView() {
     setIntelError(null)
     setSavedToDb(false)
     setCopiedHook(false)
+    setOzSteps([])
+    setOzDone(false)
+    setOzError(null)
+  }
+
+  const handleOutreach = async () => {
+    if (!selected || ozLoading) return
+    setOzSteps([])
+    setOzDone(false)
+    setOzError(null)
+    setOzLoading(true)
+
+    const controller = new AbortController()
+    ozAbortRef.current = controller
+
+    try {
+      await generateOutreachSequence(selected, intelData || null, setOzSteps, controller.signal)
+      setOzDone(true)
+    } catch (e) {
+      if (e.name !== 'AbortError') setOzError(e.message || 'Outreach generation failed')
+    } finally {
+      setOzLoading(false)
+      ozAbortRef.current = null
+    }
   }
 
   const handleSelect = (d) => {
@@ -671,7 +703,7 @@ export default function RexView() {
     }
   }
 
-  const anyRunning = isStreaming || intelLoading
+  const anyRunning = isStreaming || intelLoading || ozLoading
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -691,7 +723,7 @@ export default function RexView() {
           <div className="flex items-center gap-2">
             {anyRunning ? (
               <button
-                onClick={() => { stop(); cancelIntel() }}
+                onClick={() => { stop(); cancelIntel(); ozAbortRef.current?.abort() }}
                 className="flex items-center gap-1.5 border border-danger/40 text-danger text-xs px-3 py-1.5 rounded-md hover:bg-danger/10 transition-colors"
               >
                 <Square size={11} fill="currentColor" />
@@ -699,6 +731,19 @@ export default function RexView() {
               </button>
             ) : (
               <>
+                {intelData && (
+                  <button
+                    onClick={handleOutreach}
+                    className={`text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition-colors border ${
+                      ozDone
+                        ? 'text-ok border-ok/40 bg-ok-light cursor-default'
+                        : 'text-info border-info/40 hover:bg-info/10'
+                    }`}
+                  >
+                    <Send size={11} />
+                    {ozDone ? '✅ Sequence saved' : '📤 Create Outreach'}
+                  </button>
+                )}
                 <button
                   onClick={handleIntel}
                   className="btn-orange text-xs flex items-center gap-1.5"
@@ -979,6 +1024,34 @@ export default function RexView() {
                               : <><Database size={11} /> Save to Supabase</>}
                           </button>
                         </div>
+
+                        {/* Oz outreach steps */}
+                        {(ozSteps.length > 0 || ozError) && (
+                          <div className="border border-bdr rounded-lg overflow-hidden">
+                            <div className="flex items-center gap-2 px-4 py-2 bg-bg-s2 border-b border-bdr">
+                              <Send size={11} className="text-info" />
+                              <span className="text-xxs font-mono text-text-mut uppercase tracking-widest">
+                                Oz — Outreach Sequence
+                              </span>
+                            </div>
+                            <div className="p-3 space-y-1.5">
+                              {ozSteps.map(step => <StepItem key={step.id} step={step} />)}
+                              {ozError && (
+                                <div className="flex items-start gap-2 mt-1">
+                                  <AlertCircle size={11} className="text-danger shrink-0 mt-0.5" />
+                                  <span className="text-xs text-danger">{ozError}</span>
+                                </div>
+                              )}
+                              {ozDone && (
+                                <div className="flex items-center gap-2 pt-1 text-xs text-ok font-mono">
+                                  <CheckCircle size={11} />
+                                  Sequence saved to Outreach queue → review in{' '}
+                                  <a href="/outreach" className="text-info underline hover:no-underline">Oz view</a>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -1054,6 +1127,14 @@ export default function RexView() {
                         ICP
                       </button>
                     </div>
+                    {intelData && (
+                      <button
+                        onClick={handleOutreach}
+                        className="mt-1 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-info/40 text-info hover:bg-info/10 transition-colors font-medium"
+                      >
+                        <Send size={11} /> 📤 Create Outreach Sequence
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

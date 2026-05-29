@@ -7,12 +7,13 @@ import { Settings2, Send, Loader2, Circle, Zap, AlertTriangle, CheckCircle, Tren
 const OLA_SYSTEM = `You are Ola, the fractional COO for GTM360. You manage OKR tracking, system health, automation operations, and revenue operations infrastructure. You keep the GTM360 OS running efficiently and flag operational risks early.
 
 GTM360 context:
-• 6 AI agents: Sam (CoS), Rex (CRO), Andy (CMO), Finn (CFO), Ola (COO), Aria (Trend Researcher)
+• 7 AI agents: Sam (CoS), Rex (CRO), Andy (CMO), Finn (CFO), Ola (COO), Aria (Trend Researcher), Oz (Outreach Execution)
 • Pipeline: HubSpot → Supabase sync
 • Content: Raw observations → drafted posts → published. Aria feeds content_queue weekly.
 • Finance: Invoice tracking, retainer management
 • OKR tracking: 3 objectives, 9 KRs, Q2 2026
-• Aria: monitors Reddit (r/sales, r/startups, r/SaaS, r/entrepreneur, r/B2Bmarketing, r/revops) via public JSON + Claude web_search. Runs Monday 7:00 AM IST. Writes to trend_reports table and content_queue (status: raw, source: Aria).
+• Aria: monitors Reddit + web via Claude web_search. Runs Monday 7:00 AM IST. Writes to trend_reports table and content_queue (status: raw, source: Aria).
+• Oz: Outreach execution agent. Generates 5-touch sequences from Rex intel. Human gate: nothing sends without explicit approval in the Outreach view.
 
 /okr — Full OKR dashboard with status, velocity, and recommendations
 /health — System health: agents, automations, integrations, data quality
@@ -174,6 +175,7 @@ export default function OlaView() {
   const [okrs, setOkrs]             = useState([])
   const [input, setInput]           = useState('')
   const [trendReport, setTrendReport] = useState(null)
+  const [outreachStats, setOutreachStats] = useState(null)
   const chatEndRef                  = useRef(null)
   const deals                       = useAppStore(s => s.deals)
   const lastRefresh                 = useAppStore(s => s.lastRefresh)
@@ -195,6 +197,24 @@ export default function OlaView() {
       .order('week_of', { ascending: false })
       .limit(1)
       .then(({ data }) => setTrendReport(data?.[0] || null))
+  }, [])
+
+  useEffect(() => {
+    supabase
+      .from('outreach_queue')
+      .select('status, company_name')
+      .then(({ data }) => {
+        if (!data) return
+        const rows = data || []
+        setOutreachStats({
+          total:    rows.length,
+          draft:    rows.filter(r => r.status === 'draft').length,
+          approved: rows.filter(r => r.status === 'approved').length,
+          sent:     rows.filter(r => r.status === 'sent').length,
+          replied:  rows.filter(r => r.status === 'replied').length,
+          companies: [...new Set(rows.map(r => r.company_name))].length,
+        })
+      })
   }, [])
 
   useEffect(() => {
@@ -311,6 +331,7 @@ export default function OlaView() {
                 { name: 'Finn', role: 'CFO',              status: 'ok' },
                 { name: 'Ola',  role: 'COO',              status: 'ok' },
                 { name: 'Aria', role: 'Trend Researcher', status: 'ok' },
+                { name: 'Oz',   role: 'Outreach',         status: 'ok' },
               ].map(a => (
                 <div key={a.name} className="flex items-center gap-2.5 text-xs">
                   <StatusDot status={a.status} />
@@ -380,6 +401,39 @@ export default function OlaView() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Oz Outreach Monitor */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-2">
+              <Send size={10} className="text-info" />
+              <div className="text-xxs font-mono text-text-mut uppercase tracking-widest">Oz — Outreach Queue</div>
+            </div>
+            {outreachStats ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="badge-muted text-xxs">{outreachStats.draft} draft</span>
+                  <span className="badge-green text-xxs">{outreachStats.approved} approved</span>
+                  <span className="badge-indigo text-xxs">{outreachStats.sent} sent</span>
+                  {outreachStats.replied > 0 && (
+                    <span className="badge-orange text-xxs">{outreachStats.replied} replied</span>
+                  )}
+                </div>
+                <div className="text-xxs text-text-sec font-mono">
+                  {outreachStats.total} touches across {outreachStats.companies} {outreachStats.companies === 1 ? 'company' : 'companies'}
+                </div>
+                {outreachStats.approved > 0 && (
+                  <div className="text-xxs text-warn font-mono">
+                    ▸ {outreachStats.approved} touch{outreachStats.approved !== 1 ? 'es' : ''} awaiting send
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-xxs text-text-mut font-mono leading-relaxed">
+                No outreach sequences yet.<br />
+                Run ⚡ Intel on a Rex deal → 📤 Create Outreach.
+              </div>
+            )}
           </div>
 
           {/* Aria Trend Intel */}

@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Mic, Briefcase, Megaphone,
   DollarSign, Settings2, BarChart2, FileText,
   TrendingUp, Target, Zap, AlertTriangle, Settings,
-  Circle,
+  Circle, Send,
 } from 'lucide-react'
 
 const AGENTS = [
@@ -15,10 +15,11 @@ const AGENTS = [
 ]
 
 const WORKSPACE = [
-  { path: '/pipeline', icon: BarChart2,   label: 'Pipeline' },
-  { path: '/content',  icon: FileText,    label: 'Content'  },
-  { path: '/finance',  icon: TrendingUp,  label: 'Finance'  },
-  { path: '/okrs',     icon: Target,      label: 'OKRs'     },
+  { path: '/pipeline', icon: BarChart2,   label: 'Pipeline'  },
+  { path: '/outreach', icon: Send,        label: 'Outreach'  },
+  { path: '/content',  icon: FileText,    label: 'Content'   },
+  { path: '/finance',  icon: TrendingUp,  label: 'Finance'   },
+  { path: '/okrs',     icon: Target,      label: 'OKRs'      },
 ]
 
 const SYSTEM = [
