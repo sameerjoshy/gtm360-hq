@@ -84,7 +84,7 @@ export default function Sidebar() {
       <nav className="flex-1 overflow-y-auto py-3 space-y-0.5">
 
         {/* Home */}
-        <NavItem path="/" icon={LayoutDashboard} label="Command Center" />
+        <NavItem path="/dashboard" icon={LayoutDashboard} label="Command Center" />
 
         <div className="pt-4 pb-1">
           <span
