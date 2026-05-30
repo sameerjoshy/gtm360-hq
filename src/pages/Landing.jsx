@@ -113,7 +113,7 @@ const AGENTS = [
   },
   {
     id: 'memo', name: 'MEMO', role: 'Head of Meeting Intelligence',
-    status: 'live', dept: 'Revenue',
+    status: 'coming-soon', dept: 'Revenue',
     desc: 'Post-call intelligence. Every meeting → commitments, signals, follow-up email, CRM update. Human gate on all outputs.',
     owns: ['Post-call intelligence extraction', 'CRM updates post-meeting', 'Follow-up email drafting', 'Deal progression tracking'],
     output: ['Extracted: commitments, signals, objections, next steps', 'HubSpot update (pending approval)', 'Follow-up email draft', "Sam's brief update"],
@@ -122,7 +122,7 @@ const AGENTS = [
   },
   {
     id: 'oz', name: 'OZ', role: 'Head of Outreach',
-    status: 'live', dept: 'Revenue',
+    status: 'coming-soon', dept: 'Revenue',
     desc: '5-touch outreach sequences. Personalized per contact using Rex intel. Nothing sends without your approval.',
     owns: ['Multi-touch sequence drafting', 'Outreach queue management', 'Response tracking', 'Campaign execution'],
     output: ['5-touch sequence (LinkedIn + email)', 'Personalized per contact', 'Queued with scheduled dates', 'Presented for approval before sending'],
@@ -158,7 +158,7 @@ const AGENTS = [
   },
   {
     id: 'aria', name: 'ARIA', role: 'Head of Trend Research',
-    status: 'live', dept: 'Marketing',
+    status: 'coming-soon', dept: 'Marketing',
     desc: 'Weekly trend intelligence. Reddit + web search. Emerging vs crowded. Raw observations into content hooks for Andy.',
     owns: ['Weekly trend monitoring', 'Emerging vs crowded topic identification', 'Content hook generation', 'Market gap identification'],
     output: ['Trend report (Monday): Emerging / Crowded / Gaps', '3-5 raw observations → content queue', 'Hook angles for each topic'],
@@ -181,8 +181,8 @@ const POS = {
   sameer: [50,  8],
   sam:    [30, 28], ola:  [72, 28],
   rex:    [18, 50], andy: [48, 50], finn: [64, 50],
-  memo:   [ 4, 72], oz:   [11, 72], prop: [18, 72],
-  pip:    [25, 72], nara: [32, 72], aria: [48, 72], cleo: [72, 72],
+  memo:   [ 4, 74], oz:   [11, 74], prop: [18, 74],
+  pip:    [25, 74], nara: [32, 74], aria: [48, 74], cleo: [72, 74],
 }
 
 const EDGES = [
@@ -193,7 +193,7 @@ const EDGES = [
 ]
 
 // Pre-computed animation durations to avoid Math.random() in render
-const EDGE_DURATIONS = [2.0, 2.3, 1.8, 2.5, 2.1, 1.7, 2.2, 1.9, 2.4, 2.0, 2.3, 1.8]
+const EDGE_DURATIONS = [3.5, 4.0, 3.2, 3.8, 3.6, 3.0, 4.0, 3.4, 3.7, 3.2, 3.9, 3.5]
 
 // ─── Helper: is agent live? ───────────────────────────────────────────────────
 const isLive = (a) => a.status === 'live' || a.status === 'always-on'
@@ -230,15 +230,16 @@ function AgentNode({ agent, selected, onClick }) {
 
   return (
     <div
+      onClick={onClick}
       style={{ position:'absolute', left:`${left}%`, top:`${top}%`,
-               transform:'translate(-50%,-50%)', zIndex: selected ? 20 : 10 }}
+               transform:'translate(-50%,-50%)', zIndex: selected ? 20 : 10,
+               cursor:'pointer' }}
     >
       <div
         ref={tiltRef}
-        onClick={onClick}
         onMouseMove={onMove}
         onMouseLeave={onLeave}
-        className="node-card cursor-pointer select-none"
+        className="node-card select-none"
         style={{
           background: selected
             ? 'rgba(255,77,0,0.12)'
@@ -299,14 +300,14 @@ function OrgLines({ selected }) {
           <g key={`${a}-${b}`}>
             <line
               x1={`${x1}%`} y1={`${y1}%`} x2={`${x2}%`} y2={`${y2}%`}
-              stroke={active ? 'rgba(255,77,0,0.35)' : 'rgba(255,255,255,0.06)'}
-              strokeWidth={active ? 1.5 : 1}
+              stroke={active ? 'rgba(255,77,0,0.45)' : 'rgba(255,255,255,0.08)'}
+              strokeWidth={active ? 2 : 1}
             />
             <line
               x1={`${x1}%`} y1={`${y1}%`} x2={`${x2}%`} y2={`${y2}%`}
-              stroke={active ? '#FF4D00' : 'rgba(255,77,0,0.22)'}
-              strokeWidth={active ? 1.5 : 1}
-              strokeDasharray="6 8"
+              stroke={active ? '#FF4D00' : 'rgba(255,100,30,0.35)'}
+              strokeWidth={active ? 2 : 1.2}
+              strokeDasharray="6 10"
               style={{ animation:`dashFlow ${EDGE_DURATIONS[i % EDGE_DURATIONS.length]}s linear infinite` }}
             />
           </g>
@@ -562,27 +563,39 @@ export default function Landing() {
 
         {/* Animated mesh background */}
         <div style={{ position:'absolute', inset:0, zIndex:0 }}>
-          {/* Grid */}
+          {/* Grid lines */}
           <div style={{
             position:'absolute', inset:0,
-            backgroundImage:`linear-gradient(rgba(255,77,0,0.04) 1px, transparent 1px),
-                             linear-gradient(90deg, rgba(255,77,0,0.04) 1px, transparent 1px)`,
+            backgroundImage:`linear-gradient(rgba(255,77,0,0.05) 1px, transparent 1px),
+                             linear-gradient(90deg, rgba(255,77,0,0.05) 1px, transparent 1px)`,
             backgroundSize:'56px 56px',
+          }} />
+          {/* Grid node dots at intersections */}
+          <div style={{
+            position:'absolute', inset:0,
+            backgroundImage:`radial-gradient(circle, rgba(255,77,0,0.25) 1px, transparent 1px)`,
+            backgroundSize:'56px 56px',
+            backgroundPosition:'0 0',
           }} />
           {/* Glow orb 1 */}
           <div style={{
-            position:'absolute', width:700, height:700, borderRadius:'50%',
-            background:'radial-gradient(circle, rgba(255,77,0,0.10) 0%, transparent 70%)',
-            top:'5%', left:'-5%', animation:'orb1Float 9s ease-in-out infinite',
+            position:'absolute', width:800, height:800, borderRadius:'50%',
+            background:'radial-gradient(circle, rgba(255,77,0,0.12) 0%, transparent 70%)',
+            top:'0%', left:'-10%', animation:'orb1Float 9s ease-in-out infinite',
           }} />
           {/* Glow orb 2 */}
           <div style={{
-            position:'absolute', width:500, height:500, borderRadius:'50%',
-            background:'radial-gradient(circle, rgba(255,77,0,0.07) 0%, transparent 70%)',
-            bottom:'10%', right:'0%', animation:'orb2Float 12s ease-in-out infinite',
+            position:'absolute', width:600, height:600, borderRadius:'50%',
+            background:'radial-gradient(circle, rgba(255,77,0,0.08) 0%, transparent 70%)',
+            bottom:'5%', right:'-5%', animation:'orb2Float 12s ease-in-out infinite',
+          }} />
+          {/* Center vignette glow */}
+          <div style={{
+            position:'absolute', inset:0,
+            background:'radial-gradient(ellipse at 50% 40%, rgba(255,77,0,0.06) 0%, transparent 60%)',
           }} />
           {/* Fade to dark at bottom */}
-          <div style={{ position:'absolute', bottom:0, left:0, right:0, height:200,
+          <div style={{ position:'absolute', bottom:0, left:0, right:0, height:240,
                         background:`linear-gradient(to bottom, transparent, ${BG})` }} />
         </div>
 
@@ -698,9 +711,9 @@ export default function Landing() {
         </Reveal>
 
         {/* Org chart container */}
-        <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
+        <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch', paddingBottom:24 }}>
           <div style={{
-            position:'relative', minWidth:1200, height:720,
+            position:'relative', minWidth:1200, height:920,
             margin:'0 auto', maxWidth:1600,
           }}>
             <OrgLines selected={selectedAgent?.id} />
@@ -730,6 +743,18 @@ export default function Landing() {
             </div>
           ))}
         </Reveal>
+
+        {/* Scroll hint */}
+        <div style={{ textAlign:'center', marginTop:32, paddingBottom:16,
+                      display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
+          <span style={{ fontFamily:'"DM Mono",monospace', fontSize:9, letterSpacing:'2.5px',
+                         color:'rgba(255,255,255,0.18)' }}>CONTINUE</span>
+          <svg width="20" height="28" viewBox="0 0 20 28" fill="none"
+               style={{ animation:'orb2Float 2.4s ease-in-out infinite', opacity:0.35 }}>
+            <path d="M10 2 L10 22" stroke="#FF4D00" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M4 16 L10 22 L16 16" stroke="#FF4D00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
       </section>
 
       {/* ── Profile Panel ─────────────────────────────────────────────────── */}
@@ -897,10 +922,10 @@ export default function Landing() {
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',
                       gap:32, maxWidth:1100, margin:'0 auto', textAlign:'center' }}>
           {[
-            { num:'8',   label:'Live Agents'      },
-            { num:'4',   label:'Coming Soon'      },
+            { num:'5',   label:'Live Agents'      },
+            { num:'7',   label:'Coming Soon'      },
             { num:'12',  label:'Auto Workflows'   },
-            { num:'86',  label:'Tests Passing'    },
+            { num:'121', label:'Tests Passing'    },
             { num:'$0',  label:'Monthly AI Cost'  },
             { num:'1',   label:'Human Running It' },
           ].map(({ num, label }, i) => (
