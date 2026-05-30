@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { supabase, fmt$ } from '../lib/supabase'
 import { useAppStore } from '../store'
-import { DollarSign, Send, Loader2, TrendingUp, AlertCircle, CheckCircle, Clock } from 'lucide-react'
+import { fetchProposals } from '../lib/prop'
+import { DollarSign, Send, Loader2, TrendingUp, AlertCircle, CheckCircle, Clock, FileText } from 'lucide-react'
 
 // ─── Finn system prompt ───────────────────────────────────────────────────────
 const FINN_SYSTEM = `You are Finn, the fractional CFO for GTM360. You handle revenue tracking, invoicing, pricing, forecasting, and commercial deal structure. You give sharp financial guidance with specific numbers.
@@ -164,9 +165,10 @@ function MetricCard({ label, value, sub, accent }) {
 
 // ─── Main view ────────────────────────────────────────────────────────────────
 export default function FinnView() {
-  const [invoices, setInvoices] = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [input, setInput]       = useState('')
+  const [invoices, setInvoices]   = useState([])
+  const [proposals, setProposals] = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [input, setInput]         = useState('')
   const chatEndRef              = useRef(null)
   const deals                   = useAppStore(s => s.deals)
   const { messages, isStreaming, send, stop } = useFinnChat(invoices, deals)
@@ -178,6 +180,8 @@ export default function FinnView() {
       .eq('record_type', 'invoice')
       .order('issue_date', { ascending: false })
       .then(({ data }) => { setInvoices(data || []); setLoading(false) })
+
+    fetchProposals().then(data => setProposals(data)).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -288,6 +292,58 @@ export default function FinnView() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Proposals pipeline */}
+          <div>
+            <div className="text-xxs font-mono text-text-mut uppercase tracking-widest mb-2">Proposals</div>
+            {proposals.length === 0 ? (
+              <div className="text-xs text-text-mut py-3 flex items-center gap-2">
+                <FileText size={12} />
+                No proposals generated yet — use Prop to write one.
+              </div>
+            ) : (
+              <>
+                {/* Summary stats */}
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {[
+                    ['Draft',    proposals.filter(p => p.status === 'draft').length,    'text-text-mut'],
+                    ['Approved', proposals.filter(p => p.status === 'approved').length, 'text-ok'],
+                    ['Sent',     proposals.filter(p => p.status === 'sent').length,     'text-gtm-orange'],
+                    ['Signed',   proposals.filter(p => p.status === 'signed').length,   'text-info'],
+                  ].map(([label, count, color]) => (
+                    <div key={label} className="card p-2.5 text-center">
+                      <div className={`font-display text-lg ${color}`}>{count}</div>
+                      <div className="text-xxs text-text-mut font-mono">{label}</div>
+                    </div>
+                  ))}
+                </div>
+                {/* Total value */}
+                <div className="flex items-center justify-between text-xs mb-2">
+                  <span className="text-text-mut font-mono">Total proposal value</span>
+                  <span className="font-mono text-gtm-orange font-medium">
+                    {fmt$(proposals.reduce((s, p) => s + (p.investment_amount || 0), 0))}
+                  </span>
+                </div>
+                {/* Recent proposals list */}
+                <div className="space-y-1.5">
+                  {proposals.slice(0, 5).map(p => {
+                    const statusCls = {
+                      draft: 'badge-muted', approved: 'badge-green',
+                      sent: 'badge-orange', signed: 'bg-ok-light text-ok text-xxs font-mono px-1.5 py-0.5 rounded',
+                    }[p.status] || 'badge-muted'
+                    return (
+                      <div key={p.id} className="flex items-center gap-3 text-xs">
+                        <span className="text-text-pri font-medium flex-1 truncate">{p.company_name}</span>
+                        <span className="text-xxs text-text-mut font-mono">{p.service_line}</span>
+                        <span className="font-mono text-text-pri">{fmt$(p.investment_amount || 0)}</span>
+                        <span className={statusCls}>{p.status}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Pricing reference */}

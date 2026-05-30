@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   supabase, fmt$, STAGE_LABELS, SERVICE_LABELS, getCompanyName,
 } from '../lib/supabase'
@@ -8,7 +9,7 @@ import {
   Briefcase, Search, Loader2, Square, AlertCircle,
   Globe, User, DollarSign, Target, Zap, Activity,
   ChevronRight, CalendarDays, ArrowRight,
-  Copy, CheckCircle, Database, Shield, Send,
+  Copy, CheckCircle, Database, Shield, Send, FileText,
 } from 'lucide-react'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -550,6 +551,7 @@ function CompetitiveContextCard({ ctx }) {
 
 // ─── Main view ────────────────────────────────────────────────────────────────
 export default function RexView() {
+  const navigate = useNavigate()
   const [deals, setDeals]             = useState([])
   const [loading, setLoading]         = useState(true)
   const [selected, setSelected]       = useState(null)
@@ -939,6 +941,22 @@ export default function RexView() {
                   <DetailRow icon={DollarSign}   label="Amount"  value={fmt$(selected.amount)} mono />
                   <DetailRow icon={Target}       label="Signal"  value={selected.signal} mono />
                 </div>
+
+                {/* Proposal CTA — shown for Discovery and Proposal stages */}
+                {(STAGE_LABELS[selected.stage] === 'Discovery' || STAGE_LABELS[selected.stage] === 'Proposal') && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      onClick={() => navigate(`/proposals?deal=${selected.deal_id}`)}
+                      className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-gtm-orange/10 border border-gtm-orange/30 text-gtm-orange rounded-md hover:bg-gtm-orange/20 transition-colors font-medium"
+                    >
+                      <FileText size={11} />
+                      📄 Generate Proposal
+                    </button>
+                    <span className="text-xxs text-text-mut font-mono">
+                      Opens Prop with this deal pre-selected
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Output area */}

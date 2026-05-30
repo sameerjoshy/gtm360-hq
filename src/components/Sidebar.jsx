@@ -15,12 +15,13 @@ const AGENTS = [
 ]
 
 const WORKSPACE = [
-  { path: '/pipeline', icon: BarChart2,  label: 'Pipeline'  },
-  { path: '/outreach', icon: Send,       label: 'Outreach'  },
-  { path: '/memo',     icon: ClipboardList, label: 'Memo'   },
-  { path: '/content',  icon: FileText,   label: 'Content'   },
-  { path: '/finance',  icon: TrendingUp, label: 'Finance'   },
-  { path: '/okrs',     icon: Target,     label: 'OKRs'      },
+  { path: '/pipeline',  icon: BarChart2,    label: 'Pipeline'  },
+  { path: '/outreach',  icon: Send,         label: 'Outreach'  },
+  { path: '/memo',      icon: ClipboardList, label: 'Memo'     },
+  { path: '/proposals', icon: FileText,     label: 'Proposals' },
+  { path: '/content',   icon: FileText,     label: 'Content'   },
+  { path: '/finance',   icon: TrendingUp,   label: 'Finance'   },
+  { path: '/okrs',      icon: Target,       label: 'OKRs'      },
 ]
 
 const SYSTEM = [
