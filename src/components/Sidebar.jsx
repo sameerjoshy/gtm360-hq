@@ -7,20 +7,20 @@ import {
 } from 'lucide-react'
 
 const AGENTS = [
-  { path: '/sam',  icon: Mic,           label: 'Sam',  sub: 'CoS' },
-  { path: '/rex',  icon: Briefcase,     label: 'Rex',  sub: 'CRO' },
-  { path: '/andy', icon: Megaphone,     label: 'Andy', sub: 'CMO' },
-  { path: '/finn', icon: DollarSign,    label: 'Finn', sub: 'CFO' },
-  { path: '/ola',  icon: Settings2,     label: 'Ola',  sub: 'COO' },
-  { path: '/memo', icon: ClipboardList, label: 'Memo', sub: 'Intel' },
+  { path: '/sam',  icon: Mic,        label: 'Sam',  sub: 'CoS' },
+  { path: '/rex',  icon: Briefcase,  label: 'Rex',  sub: 'CRO' },
+  { path: '/andy', icon: Megaphone,  label: 'Andy', sub: 'CMO' },
+  { path: '/finn', icon: DollarSign, label: 'Finn', sub: 'CFO' },
+  { path: '/ola',  icon: Settings2,  label: 'Ola',  sub: 'COO' },
 ]
 
 const WORKSPACE = [
-  { path: '/pipeline', icon: BarChart2,   label: 'Pipeline'  },
-  { path: '/outreach', icon: Send,        label: 'Outreach'  },
-  { path: '/content',  icon: FileText,    label: 'Content'   },
-  { path: '/finance',  icon: TrendingUp,  label: 'Finance'   },
-  { path: '/okrs',     icon: Target,      label: 'OKRs'      },
+  { path: '/pipeline', icon: BarChart2,  label: 'Pipeline'  },
+  { path: '/outreach', icon: Send,       label: 'Outreach'  },
+  { path: '/memo',     icon: ClipboardList, label: 'Memo'   },
+  { path: '/content',  icon: FileText,   label: 'Content'   },
+  { path: '/finance',  icon: TrendingUp, label: 'Finance'   },
+  { path: '/okrs',     icon: Target,     label: 'OKRs'      },
 ]
 
 const SYSTEM = [

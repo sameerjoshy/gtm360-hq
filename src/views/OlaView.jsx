@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAppStore } from '../store'
+import { countMeetingsThisWeek } from '../lib/memo'
 import { Settings2, Send, Loader2, Circle, Zap, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react'
 
 // ─── Ola system prompt ─────────────────────────────────────────────────────────
@@ -177,6 +178,7 @@ export default function OlaView() {
   const [input, setInput]           = useState('')
   const [trendReport, setTrendReport] = useState(null)
   const [outreachStats, setOutreachStats] = useState(null)
+  const [memoCount, setMemoCount]   = useState(null)
   const chatEndRef                  = useRef(null)
   const deals                       = useAppStore(s => s.deals)
   const lastRefresh                 = useAppStore(s => s.lastRefresh)
@@ -216,6 +218,10 @@ export default function OlaView() {
           companies: [...new Set(rows.map(r => r.company_name))].length,
         })
       })
+  }, [])
+
+  useEffect(() => {
+    countMeetingsThisWeek().then(setMemoCount)
   }, [])
 
   useEffect(() => {
@@ -339,7 +345,11 @@ export default function OlaView() {
                   <StatusDot status={a.status} />
                   <span className="text-text-sec">{a.name}</span>
                   <span className="text-xxs text-text-mut font-mono">— {a.role}</span>
-                  <span className="ml-auto text-xxs font-mono text-ok">Live</span>
+                  <span className="ml-auto text-xxs font-mono text-ok">
+                    {a.name === 'Memo' && memoCount !== null
+                      ? `${memoCount} meeting${memoCount !== 1 ? 's' : ''} this week`
+                      : 'Live'}
+                  </span>
                 </div>
               ))}
             </div>

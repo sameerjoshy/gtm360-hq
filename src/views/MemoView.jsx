@@ -1,74 +1,88 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import {
   FileText, Loader2, AlertCircle, CheckCircle,
-  Copy, ChevronRight, Calendar, User, Building2,
-  Mail, BarChart2, ArrowRight, Zap, RefreshCw,
-  TrendingUp, Shield, Clock, MessageSquare, X,
+  Copy, Calendar, RefreshCw, X, Mic,
+  TrendingUp, ChevronRight, Shield, Clock,
+  ArrowRight, Check,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { analyzeMeeting, saveMeetingNote, approveMeetingNote, fetchMeetingNotes, updateFollowUp } from '../lib/memo'
+import {
+  analyzeMeeting, saveMeetingIntel, approveFollowUp,
+  approveCrmUpdate, fetchMeetingIntel, updateFollowUp,
+} from '../lib/memo'
 
-// ─── Constants ─────────────────────────────────────────────────────────────────
-
-const MEETING_TYPES = [
-  { value: 'discovery',  label: 'Discovery' },
-  { value: 'check_in',   label: 'Check-in'  },
-  { value: 'proposal',   label: 'Proposal'  },
-  { value: 'demo',       label: 'Demo'      },
-  { value: 'other',      label: 'Other'     },
-]
-
-const STRENGTH_CONFIG = {
-  HIGH:   { color: 'text-ok',          bg: 'bg-ok-light',      label: 'HIGH'   },
-  MEDIUM: { color: 'text-warn',        bg: 'bg-warn-light',    label: 'MED'    },
-  LOW:    { color: 'text-text-mut',    bg: 'bg-bg-s2',         label: 'LOW'    },
+// ─── Stage label map ────────────────────────────────────────────────────────────
+const STAGE_COLORS = {
+  Radar:     'text-text-mut   bg-bg-s2',
+  Connected: 'text-info       bg-info-light',
+  Engaged:   'text-accent     bg-accent-light',
+  Discovery: 'text-warn       bg-warn-light',
+  Proposal:  'text-ok         bg-ok-light',
 }
 
-const STATUS_CONFIG = {
-  draft:     { label: 'Draft',     color: 'text-text-mut',   icon: Clock       },
-  extracted: { label: 'Extracted', color: 'text-info',       icon: Zap         },
-  approved:  { label: 'Approved',  color: 'text-ok',         icon: CheckCircle },
-  archived:  { label: 'Archived',  color: 'text-text-mut',   icon: FileText    },
+const CONFIDENCE_COLORS = {
+  HIGH:   'text-ok   bg-ok-light',
+  MEDIUM: 'text-warn bg-warn-light',
+  LOW:    'text-danger bg-danger-light',
 }
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
+const HS_STAGES = {
+  appointmentscheduled:  'Radar',
+  qualifiedtobuy:        'Connected',
+  presentationscheduled: 'Engaged',
+  decisionmakerboughtin: 'Discovery',
+  contractsent:          'Proposal',
+}
 
-function StepItem({ step }) {
-  const iconMap = {
-    running: <Loader2 size={11} className="animate-spin text-gtm-orange shrink-0" />,
-    done:    <CheckCircle size={11} className="text-ok shrink-0" />,
-    error:   <AlertCircle size={11} className="text-danger shrink-0" />,
-    pending: <div className="w-2.5 h-2.5 rounded-full border border-bdr shrink-0" />,
-  }
-  const colorMap = {
-    running: 'text-text-pri', done: 'text-ok', error: 'text-danger', pending: 'text-text-mut',
-  }
+// ─── Sub-components ─────────────────────────────────────────────────────────────
+
+function StageBadge({ stage }) {
+  const cls = STAGE_COLORS[stage] || 'text-text-mut bg-bg-s2'
   return (
-    <div className="flex items-center gap-2 text-xs font-mono">
-      {iconMap[step.status] ?? iconMap.pending}
-      <span className={colorMap[step.status] ?? 'text-text-mut'}>{step.label}</span>
-    </div>
-  )
-}
-
-function SectionHeader({ label }) {
-  return (
-    <div className="text-xxs font-mono text-text-mut uppercase tracking-widest mb-2 pt-1">{label}</div>
-  )
-}
-
-function SignalStrength({ strength }) {
-  const cfg = STRENGTH_CONFIG[strength] || STRENGTH_CONFIG.LOW
-  return (
-    <span className={`text-xxs font-mono px-1.5 py-0.5 rounded ${cfg.color} ${cfg.bg}`}>
-      {cfg.label}
+    <span className={`text-xxs font-mono px-1.5 py-0.5 rounded font-medium ${cls}`}>
+      {stage || '—'}
     </span>
   )
 }
 
-function NoteRow({ note, isSelected, onClick }) {
-  const statusCfg = STATUS_CONFIG[note.status] || STATUS_CONFIG.extracted
-  const StatusIcon = statusCfg.icon
+function ConfBadge({ conf }) {
+  const cls = CONFIDENCE_COLORS[conf] || 'text-text-mut bg-bg-s2'
+  return (
+    <span className={`text-xxs font-mono px-1.5 py-0.5 rounded font-medium ${cls}`}>
+      {conf || 'MED'}
+    </span>
+  )
+}
+
+function StepItem({ step }) {
+  const icon = {
+    running: <Loader2 size={11} className="animate-spin text-gtm-orange shrink-0" />,
+    done:    <CheckCircle size={11} className="text-ok shrink-0" />,
+    error:   <AlertCircle size={11} className="text-danger shrink-0" />,
+    pending: <div className="w-2.5 h-2.5 rounded-full border border-bdr shrink-0" />,
+  }[step.status] ?? <div className="w-2.5 h-2.5 rounded-full border border-bdr shrink-0" />
+
+  const color = {
+    running: 'text-text-pri', done: 'text-ok',
+    error: 'text-danger', pending: 'text-text-mut',
+  }[step.status] ?? 'text-text-mut'
+
+  return (
+    <div className="flex items-center gap-2 text-xs font-mono">
+      {icon}
+      <span className={color}>{step.label}</span>
+    </div>
+  )
+}
+
+// Left panel meeting row
+function MeetingRow({ meeting, isSelected, onClick }) {
+  const date = meeting.meeting_date
+    ? new Date(meeting.meeting_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    : '—'
+  const status = meeting.crm_update_approved ? 'Approved' : meeting.followup_approved ? 'Follow-up ✓' : 'Extracted'
+  const statusColor = meeting.crm_update_approved ? 'text-ok' : meeting.followup_approved ? 'text-info' : 'text-text-mut'
+
   return (
     <button
       onClick={onClick}
@@ -77,422 +91,403 @@ function NoteRow({ note, isSelected, onClick }) {
       }`}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <div className="text-sm font-medium text-text-pri truncate">{note.company_name}</div>
-          <div className="text-xs text-text-mut font-mono mt-0.5">
-            {note.contact_name || '—'} · {note.meeting_type}
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-medium text-text-pri truncate">{meeting.company_name || 'Unknown'}</div>
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            <span className="text-xxs text-text-mut font-mono">{date}</span>
+            <StageBadge stage={meeting.deal_stage_recommendation} />
+            <ConfBadge conf={meeting.confidence} />
           </div>
-          {note.sam_brief_update && (
-            <div className="text-xs text-text-sec mt-1 line-clamp-1 leading-snug">
-              {note.sam_brief_update}
-            </div>
-          )}
         </div>
-        <div className="shrink-0 flex flex-col items-end gap-1">
-          <span className={`text-xxs font-mono flex items-center gap-1 ${statusCfg.color}`}>
-            <StatusIcon size={9} />{statusCfg.label}
-          </span>
-          <span className="text-xxs text-text-mut font-mono">
-            {new Date(note.meeting_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </span>
-        </div>
+        <span className={`text-xxs font-mono shrink-0 ${statusColor}`}>{status}</span>
       </div>
     </button>
   )
 }
 
-// ─── Intel display panels ──────────────────────────────────────────────────────
-
-function CommitmentsPanel({ items }) {
-  if (!items?.length) return <div className="text-xs text-text-mut font-mono">No commitments recorded.</div>
+// Color-coded intel section
+function IntelSection({ title, items = [], borderColor, emptyText }) {
+  if (!items.length) {
+    return (
+      <div className={`border-l-2 ${borderColor} pl-3 py-2`}>
+        <div className="text-xxs font-mono text-text-mut uppercase tracking-widest mb-1">{title}</div>
+        <div className="text-xs text-text-mut italic">{emptyText}</div>
+      </div>
+    )
+  }
   return (
-    <div className="space-y-2">
-      {items.map((c, i) => (
-        <div key={i} className="border border-bdr rounded-lg px-3 py-2.5">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-xxs font-mono text-gtm-orange font-bold">{c.who}</span>
-            {c.by_when && <span className="text-xxs font-mono text-text-mut">{c.by_when}</span>}
-          </div>
-          <div className="text-xs text-text-pri mt-1 leading-snug">{c.what}</div>
-        </div>
-      ))}
+    <div className={`border-l-2 ${borderColor} pl-3`}>
+      <div className="text-xxs font-mono text-text-mut uppercase tracking-widest mb-2">{title}</div>
+      <ul className="space-y-1">
+        {items.map((item, i) => (
+          <li key={i} className="text-sm text-text-pri flex items-start gap-1.5">
+            <span className="text-text-mut mt-0.5 shrink-0">▸</span>
+            <span className="leading-snug">{item}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
 
-function BuyingSignalsPanel({ items }) {
-  if (!items?.length) return <div className="text-xs text-text-mut font-mono">No buying signals detected.</div>
+// Two-column commitments section
+function CommitmentsSection({ bySameer = [], byProspect = [] }) {
   return (
-    <div className="space-y-2">
-      {items.map((s, i) => (
-        <div key={i} className="border border-bdr rounded-lg px-3 py-2.5">
-          <div className="flex items-center gap-2 mb-1">
-            <SignalStrength strength={s.strength} />
-            <span className="text-xs font-medium text-text-pri">{s.signal}</span>
-          </div>
-          {s.quote && (
-            <div className="text-xs text-text-mut italic font-mono leading-snug border-l-2 border-bdr pl-2">
-              "{s.quote}"
-            </div>
-          )}
+    <div className="border-l-2 border-gtm-orange pl-3">
+      <div className="text-xxs font-mono text-text-mut uppercase tracking-widest mb-2">Commitments</div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <div className="text-xxs font-mono text-gtm-orange mb-1.5">Sameer's</div>
+          {bySameer.length ? (
+            <ul className="space-y-1">
+              {bySameer.map((c, i) => <li key={i} className="text-sm text-text-pri flex gap-1.5"><span className="text-text-mut shrink-0">▸</span><span className="leading-snug">{c}</span></li>)}
+            </ul>
+          ) : <div className="text-xs text-text-mut italic">None recorded</div>}
         </div>
-      ))}
+        <div>
+          <div className="text-xxs font-mono text-text-sec mb-1.5">Prospect's</div>
+          {byProspect.length ? (
+            <ul className="space-y-1">
+              {byProspect.map((c, i) => <li key={i} className="text-sm text-text-pri flex gap-1.5"><span className="text-text-mut shrink-0">▸</span><span className="leading-snug">{c}</span></li>)}
+            </ul>
+          ) : <div className="text-xs text-text-mut italic">None recorded</div>}
+        </div>
+      </div>
     </div>
   )
 }
 
-function ObjectionsPanel({ items }) {
-  if (!items?.length) return <div className="text-xs text-text-mut font-mono">No objections raised.</div>
-  return (
-    <div className="space-y-2">
-      {items.map((o, i) => (
-        <div key={i} className="border-l-2 border-warn/50 pl-3 py-1">
-          <div className="text-xs font-medium text-warn leading-snug">{o.objection}</div>
-          <div className="text-xs text-text-sec mt-1.5 leading-snug">
-            <span className="text-xxs font-mono text-text-mut mr-1">→</span>{o.response_suggested}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function NextStepsPanel({ items }) {
-  if (!items?.length) return <div className="text-xs text-text-mut font-mono">No next steps recorded.</div>
-  return (
-    <div className="space-y-1.5">
-      {items.map((n, i) => (
-        <div key={i} className="flex items-start gap-2.5 text-xs">
-          <div className="w-4 h-4 rounded-full bg-bg-s2 border border-bdr flex items-center justify-center shrink-0 mt-0.5">
-            <span className="text-xxs font-mono text-text-mut">{i + 1}</span>
-          </div>
-          <div className="flex-1">
-            <span className="text-text-pri">{n.action}</span>
-            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <span className="text-xxs text-gtm-orange font-mono">{n.owner}</span>
-              {n.due_date && <span className="text-xxs text-text-mut font-mono">{n.due_date}</span>}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ─── Main view ─────────────────────────────────────────────────────────────────
+// ─── Main view ──────────────────────────────────────────────────────────────────
 
 export default function MemoView() {
-  // ── Notes list state ──
-  const [notes, setNotes]           = useState([])
-  const [notesLoading, setNotesLoading] = useState(true)
-  const [selected, setSelected]     = useState(null)
-  const [refreshing, setRefreshing] = useState(false)
+  // ── Data ──
+  const [meetings, setMeetings]       = useState([])
+  const [loading, setLoading]         = useState(true)
+  const [refreshing, setRefreshing]   = useState(false)
+  const [selected, setSelected]       = useState(null)
+  const [deals, setDeals]             = useState([])
 
-  // ── Input form state ──
-  const [showForm, setShowForm]     = useState(false)
-  const [transcript, setTranscript] = useState('')
+  // ── Form ──
+  const [showForm, setShowForm]       = useState(false)
+  const [notes, setNotes]             = useState('')
   const [companyName, setCompanyName] = useState('')
-  const [contactName, setContactName] = useState('')
+  const [dealId, setDealId]           = useState('')
+  const [contactNamesRaw, setContactNamesRaw] = useState('')
   const [meetingDate, setMeetingDate] = useState(new Date().toISOString().slice(0, 10))
-  const [meetingType, setMeetingType] = useState('discovery')
-  const [dealId, setDealId]         = useState('')
-  const [deals, setDeals]           = useState([])
 
-  // ── Extraction state ──
-  const [steps, setSteps]           = useState([])
-  const [extracting, setExtracting] = useState(false)
-  const [extractError, setExtractError] = useState(null)
-  const [currentIntel, setCurrentIntel] = useState(null)
-  const [savedId, setSavedId]       = useState(null)
+  // ── Processing ──
+  const [steps, setSteps]             = useState([])
+  const [processing, setProcessing]   = useState(false)
+  const [procError, setProcError]     = useState(null)
   const abortRef = useRef(null)
 
-  // ── Detail panel tabs ──
-  const [activeTab, setActiveTab]   = useState('intel') // intel | followup | crm
-  const [copied, setCopied]         = useState(false)
-  const [approving, setApproving]   = useState(false)
-  const [approved, setApproved]     = useState(false)
+  // ── Results actions ──
+  const [copied, setCopied]           = useState(false)
   const [editingEmail, setEditingEmail] = useState(false)
-  const [editSubject, setEditSubject]   = useState('')
-  const [editBody, setEditBody]         = useState('')
-  const [savingEmail, setSavingEmail]   = useState(false)
+  const [editSubject, setEditSubject] = useState('')
+  const [editBody, setEditBody]       = useState('')
+  const [savingEmail, setSavingEmail] = useState(false)
+  const [approvingFU, setApprovingFU] = useState(false)
+  const [approvingCRM, setApprovingCRM] = useState(false)
 
-  // ── Load notes + deals ──────────────────────────────────────────────────────
-  const loadNotes = useCallback(async (quiet = false) => {
-    if (!quiet) setNotesLoading(true)
-    else setRefreshing(true)
+  // ── Load ────────────────────────────────────────────────────────────────────
+  const loadMeetings = useCallback(async (quiet = false) => {
+    quiet ? setRefreshing(true) : setLoading(true)
     try {
-      const data = await fetchMeetingNotes()
-      setNotes(data)
+      const data = await fetchMeetingIntel()
+      setMeetings(data)
       if (selected) {
-        const updated = data.find(n => n.id === selected.id)
+        const updated = data.find(m => m.id === selected.id)
         if (updated) setSelected(updated)
       }
     } catch (e) { console.error(e) }
-    finally { setNotesLoading(false); setRefreshing(false) }
+    finally { setLoading(false); setRefreshing(false) }
   }, [selected])
 
-  useEffect(() => { loadNotes() }, [])
+  useEffect(() => { loadMeetings() }, [])
 
   useEffect(() => {
-    supabase.from('pipeline_snapshot').select('deal_id,deal_name,company_name,company_domain').order('amount', { ascending: false })
+    supabase
+      .from('pipeline_snapshot')
+      .select('deal_id,deal_name,company_name,company_domain')
+      .order('amount', { ascending: false })
       .then(({ data }) => setDeals(data || []))
   }, [])
 
-  // ── Extraction ──────────────────────────────────────────────────────────────
-  const handleExtract = async () => {
-    if (!transcript.trim() || !companyName.trim() || extracting) return
+  // ── Process meeting ─────────────────────────────────────────────────────────
+  const handleProcess = async () => {
+    if (!notes.trim() || processing) return
     setSteps([])
-    setExtractError(null)
-    setCurrentIntel(null)
-    setSavedId(null)
-    setExtracting(true)
+    setProcError(null)
+    setProcessing(true)
 
     const controller = new AbortController()
     abortRef.current = controller
 
     try {
-      const intel = await analyzeMeeting(
-        { transcript, companyName, contactName, meetingDate, meetingType, dealId },
-        setSteps,
-        controller.signal
-      )
-      setCurrentIntel(intel)
+      const contactNames = contactNamesRaw
+        .split(',').map(s => s.trim()).filter(Boolean)
 
-      // Auto-save
-      const id = await saveMeetingNote(
-        { transcript, companyName, contactName, meetingDate, meetingType, dealId },
-        intel
-      )
-      setSavedId(id)
-      await loadNotes(true)
-      // Select the new note
-      const freshNotes = await fetchMeetingNotes()
-      const newNote = freshNotes.find(n => n.id === id)
-      if (newNote) setSelected(newNote)
+      const params = { transcript: notes, companyName, contactNames, meetingDate, dealId }
+      const { intel, crmDraft } = await analyzeMeeting(params, setSteps, controller.signal)
+      const id = await saveMeetingIntel(params, intel, crmDraft)
+
+      const freshData = await fetchMeetingIntel()
+      setMeetings(freshData)
+      const newMeeting = freshData.find(m => m.id === id)
+      if (newMeeting) setSelected(newMeeting)
       setShowForm(false)
     } catch (e) {
-      if (e.name !== 'AbortError') setExtractError(e.message || 'Extraction failed')
+      if (e.name !== 'AbortError') setProcError(e.message || 'Processing failed')
     } finally {
-      setExtracting(false)
+      setProcessing(false)
       abortRef.current = null
     }
   }
 
-  // ── Approve ─────────────────────────────────────────────────────────────────
-  const handleApprove = async () => {
-    if (!selected || approving) return
-    setApproving(true)
-    try {
-      await approveMeetingNote(selected.id)
-      setApproved(true)
-      await loadNotes(true)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setApproving(false)
-    }
-  }
-
-  // ── Copy email ──────────────────────────────────────────────────────────────
+  // ── Email actions ───────────────────────────────────────────────────────────
   const handleCopy = () => {
     if (!selected) return
-    const text = `Subject: ${selected.follow_up_email_subject}\n\n${selected.follow_up_email_body}`
+    const text = `Subject: ${selected.followup_subject}\n\n${selected.followup_body}`
     navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // ── Save email edit ─────────────────────────────────────────────────────────
+  const startEditEmail = () => {
+    setEditSubject(selected?.followup_subject || '')
+    setEditBody(selected?.followup_body || '')
+    setEditingEmail(true)
+  }
+
   const handleSaveEmail = async () => {
     if (!selected) return
     setSavingEmail(true)
     try {
       await updateFollowUp(selected.id, editSubject, editBody)
       setEditingEmail(false)
-      await loadNotes(true)
+      await loadMeetings(true)
     } catch (e) { console.error(e) }
     finally { setSavingEmail(false) }
   }
 
-  const startEditEmail = () => {
-    setEditSubject(selected?.follow_up_email_subject || '')
-    setEditBody(selected?.follow_up_email_body || '')
-    setEditingEmail(true)
+  const handleApproveFollowUp = async () => {
+    if (!selected || approvingFU) return
+    setApprovingFU(true)
+    try {
+      await approveFollowUp(selected.id)
+      await loadMeetings(true)
+    } catch (e) { console.error(e) }
+    finally { setApprovingFU(false) }
   }
 
-  // ── Select note ─────────────────────────────────────────────────────────────
-  const handleSelect = (note) => {
-    setSelected(note)
-    setActiveTab('intel')
-    setApproved(note.status === 'approved')
+  const handleApproveCRM = async () => {
+    if (!selected || approvingCRM) return
+    setApprovingCRM(true)
+    try {
+      await approveCrmUpdate(selected.id)
+      await loadMeetings(true)
+    } catch (e) { console.error(e) }
+    finally { setApprovingCRM(false) }
+  }
+
+  const handleSelect = (m) => {
+    setSelected(m)
     setEditingEmail(false)
     setCopied(false)
+    setShowForm(false)
   }
 
-  const displayNote = selected
+  const openForm = () => {
+    setShowForm(true)
+    setSelected(null)
+    setSteps([])
+    setProcError(null)
+    setNotes('')
+    setCompanyName('')
+    setDealId('')
+    setContactNamesRaw('')
+    setMeetingDate(new Date().toISOString().slice(0, 10))
+  }
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="h-[calc(100vh-48px)] flex flex-col overflow-hidden">
 
-      {/* ── Toolbar ── */}
+      {/* Toolbar */}
       <div className="flex items-center gap-3 px-5 py-3 border-b border-bdr shrink-0">
-        <div className="flex items-center gap-2">
-          <FileText size={14} className="text-gtm-orange" />
-          <span className="font-display text-lg tracking-wide">Memo</span>
-          <span className="text-text-mut text-xs font-mono">— Meeting Intel</span>
-        </div>
+        <Mic size={14} className="text-gtm-orange" />
+        <span className="font-display text-lg tracking-wide">MEMO</span>
+        <span className="text-text-mut text-xs font-mono">— Meeting Intelligence</span>
         <div className="flex-1" />
         <button
-          onClick={() => loadNotes(true)}
+          onClick={() => loadMeetings(true)}
           disabled={refreshing}
           className="btn-ghost text-xs border border-bdr flex items-center gap-1.5"
         >
           <RefreshCw size={11} className={refreshing ? 'animate-spin' : ''} />
           Refresh
         </button>
-        <button
-          onClick={() => { setShowForm(true); setCurrentIntel(null); setSavedId(null); setSteps([]); setExtractError(null) }}
-          className="btn-orange text-xs flex items-center gap-1.5"
-        >
-          <Zap size={11} />
-          New Analysis
+        <button onClick={openForm} className="btn-orange text-xs flex items-center gap-1.5">
+          <FileText size={11} />
+          + Process Meeting
         </button>
       </div>
 
-      {/* ── Main content ── */}
+      {/* Main */}
       <div className="flex flex-1 overflow-hidden">
 
-        {/* ── Left: Notes list ── */}
-        <div className="w-[320px] shrink-0 border-r border-bdr flex flex-col overflow-hidden">
-          {notesLoading ? (
+        {/* ── Left: Past meetings (40%) ── */}
+        <div className="w-[40%] shrink-0 border-r border-bdr flex flex-col overflow-hidden">
+          <div className="px-4 py-2 border-b border-bdr/40 bg-bg-s2 shrink-0">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 text-xxs font-mono text-text-mut uppercase tracking-wider">
+              <span>Company</span>
+              <span>Date</span>
+              <span>Stage</span>
+              <span>Conf</span>
+            </div>
+          </div>
+
+          {loading ? (
             <div className="flex-1 space-y-px pt-px">
-              {[...Array(4)].map((_, i) => (
+              {[...Array(5)].map((_, i) => (
                 <div key={i} className="px-4 py-3 border-b border-bdr/30 animate-pulse space-y-1.5">
                   <div className="h-3 bg-bg-s2 rounded w-3/4" />
-                  <div className="h-2.5 bg-bg-s2 rounded w-1/2" />
-                  <div className="h-2 bg-bg-s2 rounded w-full" />
+                  <div className="h-2 bg-bg-s2 rounded w-1/2" />
                 </div>
               ))}
             </div>
-          ) : notes.length === 0 ? (
+          ) : meetings.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center p-6">
               <FileText size={20} className="text-text-mut" />
               <div>
-                <div className="text-sm text-text-sec">No meeting notes yet</div>
-                <div className="text-xs text-text-mut mt-1">Click <span className="font-mono text-gtm-orange">New Analysis</span> to analyze a call transcript.</div>
+                <div className="text-sm text-text-sec font-medium">No meetings processed yet.</div>
+                <div className="text-xs text-text-mut mt-1 leading-relaxed">
+                  Paste notes after your first call.
+                </div>
               </div>
+              <button onClick={openForm} className="btn-orange text-xs flex items-center gap-1.5 mt-1">
+                <FileText size={11} /> Process First Meeting
+              </button>
             </div>
           ) : (
             <div className="flex-1 overflow-y-auto">
-              {notes.map(note => (
-                <NoteRow
-                  key={note.id}
-                  note={note}
-                  isSelected={selected?.id === note.id}
-                  onClick={() => handleSelect(note)}
+              {meetings.map(m => (
+                <MeetingRow
+                  key={m.id}
+                  meeting={m}
+                  isSelected={selected?.id === m.id}
+                  onClick={() => handleSelect(m)}
                 />
               ))}
             </div>
           )}
         </div>
 
-        {/* ── Right panel ── */}
+        {/* ── Right: Form or Results (60%) ── */}
         <div className="flex-1 flex flex-col overflow-hidden">
 
-          {/* ── New Analysis Form ── */}
+          {/* ── Processing form ── */}
           {showForm && (
             <div className="flex-1 overflow-y-auto p-5">
               <div className="max-w-2xl space-y-4">
 
-                {/* Header */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText size={13} className="text-gtm-orange" />
-                    <span className="font-mono text-xs text-text-pri uppercase tracking-widest">New Analysis</span>
+                    <span className="font-mono text-xs text-text-pri uppercase tracking-widest">Process Meeting</span>
                   </div>
                   <button onClick={() => setShowForm(false)} className="text-text-mut hover:text-text-pri">
                     <X size={14} />
                   </button>
                 </div>
 
-                {/* Meeting metadata */}
+                {/* Metadata */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xxs font-mono text-text-mut uppercase tracking-wider mb-1">Company *</label>
+                    <label className="block text-xxs font-mono text-text-mut uppercase tracking-wider mb-1">Company</label>
+                    <select
+                      value={dealId}
+                      onChange={e => {
+                        setDealId(e.target.value)
+                        const deal = deals.find(d => d.deal_id === e.target.value)
+                        if (deal) setCompanyName(deal.company_name || deal.deal_name?.split(/[—–-]/)[0]?.trim() || '')
+                      }}
+                      className="input-base w-full text-sm py-2"
+                    >
+                      <option value="">— Select from pipeline —</option>
+                      {deals.map(d => (
+                        <option key={d.deal_id} value={d.deal_id}>
+                          {d.company_name || d.deal_name}
+                        </option>
+                      ))}
+                    </select>
+                    {!dealId && (
+                      <input
+                        value={companyName}
+                        onChange={e => setCompanyName(e.target.value)}
+                        placeholder="Or type company name…"
+                        className="input-base w-full text-sm py-1.5 mt-1.5"
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xxs font-mono text-text-mut uppercase tracking-wider mb-1">Contact names (comma-sep)</label>
                     <input
-                      value={companyName}
-                      onChange={e => setCompanyName(e.target.value)}
-                      placeholder="e.g. revVana"
+                      value={contactNamesRaw}
+                      onChange={e => setContactNamesRaw(e.target.value)}
+                      placeholder="e.g. Marcus Chen, Jana Smith"
                       className="input-base w-full text-sm py-2"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xxs font-mono text-text-mut uppercase tracking-wider mb-1">Contact</label>
-                    <input
-                      value={contactName}
-                      onChange={e => setContactName(e.target.value)}
-                      placeholder="e.g. Marcus Chen"
-                      className="input-base w-full text-sm py-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xxs font-mono text-text-mut uppercase tracking-wider mb-1">Meeting Date</label>
+                  <div className="col-span-2">
+                    <label className="block text-xxs font-mono text-text-mut uppercase tracking-wider mb-1">
+                      <Calendar size={9} className="inline mr-1" />Meeting date
+                    </label>
                     <input
                       type="date"
                       value={meetingDate}
                       onChange={e => setMeetingDate(e.target.value)}
-                      className="input-base w-full text-sm py-2"
+                      className="input-base text-sm py-2"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-xxs font-mono text-text-mut uppercase tracking-wider mb-1">Type</label>
-                    <select value={meetingType} onChange={e => setMeetingType(e.target.value)} className="input-base w-full text-sm py-2">
-                      {MEETING_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                    </select>
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-xxs font-mono text-text-mut uppercase tracking-wider mb-1">Deal (optional)</label>
-                    <select value={dealId} onChange={e => setDealId(e.target.value)} className="input-base w-full text-sm py-2">
-                      <option value="">— Select deal —</option>
-                      {deals.map(d => (
-                        <option key={d.deal_id} value={d.deal_id}>
-                          {d.company_name || d.deal_name} {d.company_domain ? `(${d.company_domain})` : ''}
-                        </option>
-                      ))}
-                    </select>
                   </div>
                 </div>
 
-                {/* Transcript */}
+                {/* Notes textarea */}
                 <div>
                   <label className="block text-xxs font-mono text-text-mut uppercase tracking-wider mb-1">
-                    Transcript / Call Notes *
+                    Meeting notes or transcript *
                   </label>
                   <textarea
-                    value={transcript}
-                    onChange={e => setTranscript(e.target.value)}
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
                     rows={14}
-                    placeholder="Paste your call transcript, meeting notes, or key discussion points here…"
+                    placeholder="Paste meeting notes or transcript here…"
                     className="input-base w-full text-sm leading-relaxed py-3 resize-none font-mono"
                   />
                   <div className="text-right text-xxs font-mono text-text-mut mt-0.5">
-                    {transcript.split(/\s+/).filter(Boolean).length} words
+                    {notes.trim().split(/\s+/).filter(Boolean).length} words
                   </div>
                 </div>
 
-                {/* Extract steps */}
-                {steps.length > 0 && (
-                  <div className="bg-bg-s2 border border-bdr rounded-lg p-3 space-y-1.5">
+                {/* Processing state */}
+                {processing && steps.length > 0 && (
+                  <div className="bg-bg-s2 border border-bdr rounded-lg p-4 space-y-2">
+                    <div className="text-xxs font-mono text-text-mut uppercase tracking-widest mb-3">
+                      Memo is extracting intelligence…
+                    </div>
                     {steps.map(s => <StepItem key={s.id} step={s} />)}
                   </div>
                 )}
 
                 {/* Error */}
-                {extractError && (
+                {procError && (
                   <div className="flex items-start gap-2 p-3 bg-danger/5 border border-danger/20 rounded-lg">
                     <AlertCircle size={14} className="text-danger shrink-0 mt-0.5" />
-                    <span className="text-xs text-danger">{extractError}</span>
+                    <div>
+                      <div className="text-xs text-danger font-medium">Processing failed</div>
+                      <div className="text-xs text-danger/80 mt-0.5 whitespace-pre-wrap">{procError}</div>
+                    </div>
                   </div>
                 )}
 
@@ -502,271 +497,237 @@ export default function MemoView() {
                     Cancel
                   </button>
                   <button
-                    onClick={handleExtract}
-                    disabled={extracting || !transcript.trim() || !companyName.trim()}
+                    onClick={handleProcess}
+                    disabled={processing || !notes.trim() || (!companyName.trim() && !dealId)}
                     className="btn-orange text-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {extracting
-                      ? <><Loader2 size={11} className="animate-spin" /> Extracting…</>
-                      : <><Zap size={11} /> Extract Intel</>}
+                    {processing
+                      ? <><Loader2 size={11} className="animate-spin" /> Processing…</>
+                      : <><Mic size={11} /> Process Meeting</>}
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* ── Note detail ── */}
-          {!showForm && displayNote && (
-            <>
-              {/* Header strip */}
+          {/* ── Results: selected meeting ── */}
+          {!showForm && selected && (
+            <div className="flex-1 flex flex-col overflow-hidden">
+
+              {/* Header */}
               <div className="shrink-0 border-b border-bdr px-5 py-4 bg-bg-s1">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="flex items-baseline gap-2 flex-wrap">
-                      <span className="font-display text-xl text-text-pri tracking-wide leading-none">
-                        {displayNote.company_name}
+                      <span className="font-display text-xl tracking-wide text-text-pri">
+                        {selected.company_name || 'Unknown Company'}
                       </span>
-                      <span className={`text-xxs font-mono px-1.5 py-0.5 rounded ${STATUS_CONFIG[displayNote.status]?.color || 'text-text-mut'} bg-bg-s2`}>
-                        {STATUS_CONFIG[displayNote.status]?.label || displayNote.status}
-                      </span>
-                      <span className="badge-muted text-xxs">{displayNote.meeting_type}</span>
+                      <StageBadge stage={selected.deal_stage_recommendation} />
+                      <ConfBadge conf={selected.confidence} />
                     </div>
-                    <div className="flex items-center gap-3 mt-1 flex-wrap">
-                      {displayNote.contact_name && (
-                        <span className="flex items-center gap-1 text-xs text-text-mut font-mono">
-                          <User size={9} />{displayNote.contact_name}
+                    <div className="flex items-center gap-3 mt-1 flex-wrap text-xxs text-text-mut font-mono">
+                      {selected.contact_names?.length > 0 && (
+                        <span>{selected.contact_names.join(', ')}</span>
+                      )}
+                      {selected.meeting_date && (
+                        <span className="flex items-center gap-1">
+                          <Calendar size={9} />
+                          {new Date(selected.meeting_date + 'T12:00:00').toLocaleDateString('en-US', {
+                            weekday: 'short', month: 'short', day: 'numeric',
+                          })}
                         </span>
                       )}
-                      <span className="flex items-center gap-1 text-xs text-text-mut font-mono">
-                        <Calendar size={9} />
-                        {new Date(displayNote.meeting_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                      </span>
                     </div>
-                    {displayNote.sam_brief_update && (
-                      <div className="mt-1.5 text-xs text-text-sec leading-snug italic">
-                        → {displayNote.sam_brief_update}
-                      </div>
-                    )}
                   </div>
+                  <div className="flex items-center gap-1.5 shrink-0 text-xxs font-mono text-text-mut">
+                    {selected.crm_update_approved && <span className="text-ok flex items-center gap-1"><Check size={9} />CRM ✓</span>}
+                    {selected.followup_approved && <span className="text-info flex items-center gap-1"><Check size={9} />FU ✓</span>}
+                  </div>
+                </div>
+                {/* Quick stats */}
+                <div className="flex gap-3 mt-2 text-xxs font-mono flex-wrap">
+                  <span className="text-ok">{selected.buying_signals?.length || 0} signals</span>
+                  <span className="text-danger">{selected.objections_raised?.length || 0} objections</span>
+                  <span className="text-gtm-orange">{(selected.commitments_by_sameer?.length || 0) + (selected.commitments_by_prospect?.length || 0)} commitments</span>
+                  <span className="text-info">{selected.next_steps?.length || 0} next steps</span>
+                </div>
+              </div>
 
-                  {displayNote.deal_stage_recommended && (
-                    <div className="shrink-0 text-right">
-                      <div className="text-xxs font-mono text-text-mut uppercase tracking-wider">Stage rec.</div>
-                      <div className="font-display text-lg text-gtm-orange leading-tight mt-0.5">
-                        {displayNote.deal_stage_recommended}
-                      </div>
-                    </div>
+              {/* Scrollable intel body */}
+              <div className="flex-1 overflow-y-auto p-5 space-y-6">
+
+                {/* Buying signals — green */}
+                <IntelSection
+                  title="Buying Signals"
+                  items={selected.buying_signals}
+                  borderColor="border-ok"
+                  emptyText="No buying signals detected."
+                />
+
+                {/* Objections — red */}
+                <IntelSection
+                  title="Objections Raised"
+                  items={selected.objections_raised}
+                  borderColor="border-danger"
+                  emptyText="No objections raised."
+                />
+
+                {/* Pain points — amber */}
+                <IntelSection
+                  title="Pain Points Confirmed"
+                  items={selected.pain_points_confirmed}
+                  borderColor="border-warn"
+                  emptyText="No pain points recorded."
+                />
+
+                {/* Commitments — orange, two columns */}
+                <CommitmentsSection
+                  bySameer={selected.commitments_by_sameer}
+                  byProspect={selected.commitments_by_prospect}
+                />
+
+                {/* Next steps — blue, numbered */}
+                <div className="border-l-2 border-info pl-3">
+                  <div className="text-xxs font-mono text-text-mut uppercase tracking-widest mb-2">Next Steps</div>
+                  {selected.next_steps?.length ? (
+                    <ol className="space-y-1.5">
+                      {selected.next_steps.map((step, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-text-pri">
+                          <span className="w-4 h-4 rounded-full bg-info-light border border-info/20 flex items-center justify-center shrink-0 mt-0.5 text-xxs font-mono text-info">{i + 1}</span>
+                          <span className="leading-snug">{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <div className="text-xs text-text-mut italic">No next steps recorded.</div>
                   )}
                 </div>
 
-                {/* Signal summary */}
-                <div className="flex items-center gap-3 mt-2 flex-wrap">
-                  <span className="text-xxs font-mono text-text-mut">
-                    {displayNote.commitments?.length || 0} commitments
-                  </span>
-                  <span className="text-xxs font-mono text-ok">
-                    {displayNote.buying_signals?.length || 0} signals
-                  </span>
-                  <span className="text-xxs font-mono text-warn">
-                    {displayNote.objections?.length || 0} objections
-                  </span>
-                  <span className="text-xxs font-mono text-text-sec">
-                    {displayNote.next_steps?.length || 0} next steps
-                  </span>
-                </div>
-              </div>
+                {/* Follow-up email */}
+                <div className="border border-bdr rounded-lg overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-bg-s2 border-b border-bdr">
+                    <span className="text-xxs font-mono text-text-mut uppercase tracking-widest">Follow-up Email</span>
+                    <div className="flex items-center gap-2">
+                      {!editingEmail && !selected.followup_approved && (
+                        <button onClick={startEditEmail} className="text-xxs font-mono text-text-mut hover:text-gtm-orange flex items-center gap-1">
+                          ✏️ Edit
+                        </button>
+                      )}
+                      <button onClick={handleCopy} className="text-xxs font-mono border border-bdr rounded px-2 py-0.5 hover:border-gtm-orange/40 hover:text-gtm-orange transition-colors flex items-center gap-1">
+                        {copied ? <><CheckCircle size={9} className="text-ok" /> Copied</> : <><Copy size={9} /> Copy Email</>}
+                      </button>
+                    </div>
+                  </div>
 
-              {/* Tab bar */}
-              <div className="flex items-center border-b border-bdr shrink-0 px-5">
-                {[
-                  { id: 'intel',   label: '📋 Intel',    icon: BarChart2  },
-                  { id: 'followup',label: '📧 Follow-up', icon: Mail       },
-                  { id: 'crm',     label: '📊 CRM',       icon: TrendingUp },
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`px-4 py-2.5 text-xs font-mono whitespace-nowrap transition-colors border-b-2 -mb-px ${
-                      activeTab === tab.id
-                        ? 'text-gtm-orange border-gtm-orange'
-                        : 'text-text-mut border-transparent hover:text-text-sec'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Tab content */}
-              <div className="flex-1 overflow-y-auto p-5 space-y-5">
-
-                {/* ── Intel tab ── */}
-                {activeTab === 'intel' && (
-                  <>
-                    <div>
-                      <SectionHeader label="Commitments" />
-                      <CommitmentsPanel items={displayNote.commitments} />
-                    </div>
-                    <div>
-                      <SectionHeader label="Buying Signals" />
-                      <BuyingSignalsPanel items={displayNote.buying_signals} />
-                    </div>
-                    <div>
-                      <SectionHeader label="Objections" />
-                      <ObjectionsPanel items={displayNote.objections} />
-                    </div>
-                    <div>
-                      <SectionHeader label="Next Steps" />
-                      <NextStepsPanel items={displayNote.next_steps} />
-                    </div>
-                    {displayNote.stage_change_rationale && (
-                      <div className="border border-bdr rounded-lg px-4 py-3 bg-accent-light/30">
-                        <SectionHeader label="Stage Recommendation Rationale" />
-                        <p className="text-xs text-text-sec leading-relaxed">{displayNote.stage_change_rationale}</p>
+                  {editingEmail ? (
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <label className="block text-xxs font-mono text-text-mut mb-1">Subject</label>
+                        <input value={editSubject} onChange={e => setEditSubject(e.target.value)} className="input-base w-full text-sm py-2" />
                       </div>
-                    )}
-                  </>
-                )}
-
-                {/* ── Follow-up tab ── */}
-                {activeTab === 'followup' && (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <SectionHeader label="Follow-up Email Draft" />
-                      <div className="flex items-center gap-2">
-                        {!editingEmail && displayNote.status !== 'approved' && (
-                          <button onClick={startEditEmail} className="text-xxs font-mono text-text-mut hover:text-text-pri flex items-center gap-1">
-                            <FileText size={9} /> Edit
-                          </button>
-                        )}
-                        <button onClick={handleCopy} className="flex items-center gap-1 text-xxs font-mono border border-bdr rounded px-2 py-0.5 hover:text-gtm-orange hover:border-gtm-orange/40 transition-colors">
-                          {copied ? <><CheckCircle size={9} className="text-ok" /> Copied</> : <><Copy size={9} /> Copy</>}
+                      <div>
+                        <label className="block text-xxs font-mono text-text-mut mb-1">Body</label>
+                        <textarea value={editBody} onChange={e => setEditBody(e.target.value)} rows={8} className="input-base w-full text-sm py-2 resize-none" />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => setEditingEmail(false)} className="btn-ghost text-xs border border-bdr">Cancel</button>
+                        <button onClick={handleSaveEmail} disabled={savingEmail} className="btn-primary text-xs flex items-center gap-1.5">
+                          {savingEmail ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle size={11} />} Save
                         </button>
                       </div>
                     </div>
+                  ) : (
+                    <div className="p-4">
+                      <div className="text-xs text-text-mut font-mono mb-2">Subject: <span className="text-text-pri font-medium">{selected.followup_subject}</span></div>
+                      <div className="text-sm text-text-sec leading-relaxed whitespace-pre-wrap">{selected.followup_body}</div>
+                    </div>
+                  )}
 
-                    {editingEmail ? (
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-xxs font-mono text-text-mut mb-1">Subject</label>
-                          <input value={editSubject} onChange={e => setEditSubject(e.target.value)} className="input-base w-full text-sm py-2" />
+                  <div className="px-4 py-2.5 border-t border-bdr bg-bg-s2 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xxs font-mono text-text-mut">
+                      <Shield size={9} />
+                      Human gate — send manually after review
+                    </div>
+                    {!selected.followup_approved ? (
+                      <button
+                        onClick={handleApproveFollowUp}
+                        disabled={approvingFU}
+                        className="btn-primary text-xxs flex items-center gap-1 py-1 px-2"
+                      >
+                        {approvingFU ? <Loader2 size={9} className="animate-spin" /> : <CheckCircle size={9} />}
+                        ✅ Mark Reviewed
+                      </button>
+                    ) : (
+                      <span className="text-xxs font-mono text-ok flex items-center gap-1"><Check size={9} />Reviewed</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* CRM update draft */}
+                <div className="border border-bdr rounded-lg overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-bg-s2 border-b border-bdr">
+                    <span className="text-xxs font-mono text-text-mut uppercase tracking-widest">CRM Update Draft</span>
+                    <StageBadge stage={selected.deal_stage_recommendation} />
+                  </div>
+                  {selected.crm_update_draft ? (
+                    <div className="p-4 space-y-2">
+                      {Object.entries(selected.crm_update_draft).map(([k, v]) => (
+                        <div key={k} className="flex items-start gap-2 text-xs">
+                          <span className="font-mono text-text-mut w-32 shrink-0">{k}</span>
+                          <span className="text-text-pri">
+                            {k === 'dealstage' ? (HS_STAGES[v] || v) : String(v)}
+                          </span>
                         </div>
-                        <div>
-                          <label className="block text-xxs font-mono text-text-mut mb-1">Body</label>
-                          <textarea value={editBody} onChange={e => setEditBody(e.target.value)} rows={10} className="input-base w-full text-sm py-2 leading-relaxed resize-none" />
-                        </div>
-                        <div className="flex justify-end gap-2">
-                          <button onClick={() => setEditingEmail(false)} className="btn-ghost text-xs border border-bdr">Cancel</button>
-                          <button onClick={handleSaveEmail} disabled={savingEmail} className="btn-primary text-xs flex items-center gap-1.5">
-                            {savingEmail ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle size={11} />}
-                            Save
-                          </button>
-                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-xs text-text-mut italic">No CRM draft generated.</div>
+                  )}
+                  <div className="px-4 py-2.5 border-t border-bdr bg-bg-s2 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xxs font-mono text-text-mut">
+                      <Shield size={9} />
+                      HubSpot push is Phase 2 — approve to record intent
+                    </div>
+                    {!selected.crm_update_approved ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleApproveCRM}
+                          disabled={approvingCRM}
+                          className="btn-primary text-xxs flex items-center gap-1 py-1 px-2"
+                        >
+                          {approvingCRM ? <Loader2 size={9} className="animate-spin" /> : <Check size={9} />}
+                          ✅ Approve CRM Update
+                        </button>
+                        <button
+                          onClick={() => setSelected(prev => ({ ...prev, crm_update_approved: false }))}
+                          className="text-xxs font-mono text-text-mut hover:text-text-sec px-2 py-1 border border-bdr rounded"
+                        >
+                          ❌ Skip
+                        </button>
                       </div>
                     ) : (
-                      <div className="border border-bdr rounded-lg overflow-hidden">
-                        <div className="px-4 py-2.5 bg-bg-s2 border-b border-bdr">
-                          <span className="text-xxs font-mono text-text-mut">Subject: </span>
-                          <span className="text-xs font-medium text-text-pri">{displayNote.follow_up_email_subject}</span>
-                        </div>
-                        <div className="px-4 py-3 text-sm text-text-pri leading-relaxed whitespace-pre-wrap font-mono text-xs">
-                          {displayNote.follow_up_email_body}
-                        </div>
-                      </div>
+                      <span className="text-xxs font-mono text-ok flex items-center gap-1"><Check size={9} />Approved</span>
                     )}
-
-                    <div className="flex items-center gap-1.5 text-xxs font-mono text-text-mut">
-                      <Shield size={9} />
-                      Human gate — copy this email and send it yourself. Nothing auto-sends.
-                    </div>
                   </div>
-                )}
-
-                {/* ── CRM tab ── */}
-                {activeTab === 'crm' && (
-                  <div className="space-y-5">
-                    {displayNote.deal_stage_recommended && (
-                      <div>
-                        <SectionHeader label="Stage Recommendation" />
-                        <div className="flex items-center gap-3 p-3 border border-bdr rounded-lg bg-accent-light/30">
-                          <ArrowRight size={14} className="text-gtm-orange shrink-0" />
-                          <div>
-                            <div className="text-sm font-medium text-text-pri">Move to: <span className="text-gtm-orange">{displayNote.deal_stage_recommended}</span></div>
-                            {displayNote.stage_change_rationale && (
-                              <div className="text-xs text-text-sec mt-0.5">{displayNote.stage_change_rationale}</div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {displayNote.crm_update_notes && (
-                      <div>
-                        <SectionHeader label="HubSpot Note (copy to CRM)" />
-                        <div className="bg-bg-s2 border border-bdr rounded-lg px-4 py-3 text-xs text-text-sec leading-relaxed font-mono whitespace-pre-wrap">
-                          {displayNote.crm_update_notes}
-                        </div>
-                      </div>
-                    )}
-
-                    {displayNote.sam_brief_update && (
-                      <div>
-                        <SectionHeader label="Sam Brief Update" />
-                        <div className="bg-bg-s2 border border-bdr rounded-lg px-4 py-3 text-xs text-text-pri leading-relaxed italic">
-                          "{displayNote.sam_brief_update}"
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-1.5 text-xxs font-mono text-text-mut">
-                      <Shield size={9} />
-                      Human gate — update HubSpot manually after approval.
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* ── Action bar ── */}
-              {displayNote.status !== 'approved' && (
-                <div className="shrink-0 border-t border-bdr px-5 py-3 bg-bg-s1 flex items-center gap-3">
-                  <div className="text-xxs font-mono text-text-mut flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-warn inline-block" />
-                    Review intel, follow-up, and CRM update before approving
-                  </div>
-                  <div className="flex-1" />
-                  <button
-                    onClick={handleApprove}
-                    disabled={approving || approved}
-                    className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md font-medium transition-colors ${
-                      approved
-                        ? 'bg-ok-light text-ok border border-ok/20 cursor-default'
-                        : 'btn-primary'
-                    }`}
-                  >
-                    {approving
-                      ? <Loader2 size={11} className="animate-spin" />
-                      : <CheckCircle size={11} />}
-                    {approved ? 'Approved' : '✅ Approve Note'}
-                  </button>
                 </div>
-              )}
-            </>
+              </div>
+            </div>
           )}
 
           {/* ── Empty state ── */}
-          {!showForm && !displayNote && (
+          {!showForm && !selected && (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center p-8">
               <div className="w-10 h-10 rounded-full bg-bg-s2 border border-bdr flex items-center justify-center">
-                <FileText size={18} className="text-text-mut" />
+                <Mic size={18} className="text-text-mut" />
               </div>
               <div>
-                <div className="text-sm text-text-sec">Select a note or start a new analysis</div>
-                <div className="text-xs text-text-mut mt-1">
-                  Paste a call transcript → Memo extracts commitments, signals, objections, next steps + drafts the follow-up.
+                <div className="text-sm text-text-sec font-medium">Select a meeting or process new notes</div>
+                <div className="text-xs text-text-mut mt-1 max-w-xs leading-relaxed">
+                  Paste meeting notes → Memo extracts buying signals, objections, commitments, next steps, and drafts the follow-up.
                 </div>
               </div>
-              <button onClick={() => setShowForm(true)} className="btn-orange text-xs flex items-center gap-1.5 mt-1">
-                <Zap size={11} /> New Analysis
+              <button onClick={openForm} className="btn-orange text-xs flex items-center gap-1.5 mt-1">
+                <FileText size={11} /> Process Meeting
               </button>
             </div>
           )}
