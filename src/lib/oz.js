@@ -1,238 +1,277 @@
 /**
  * oz.js — Outreach Execution Agent
  *
- * Generates a 5-touch outreach sequence for a pipeline deal using Claude,
- * then writes the touches to the outreach_queue table in Supabase.
+ * Generates a personalised 5-touch outreach sequence using Cloudflare Workers AI.
+ * Writes touches to outreach_queue in Supabase.
  *
- * Architecture:
- *   Deal data (from Rex) → Claude (non-streaming JSON) → Supabase outreach_queue
+ * Human gate: nothing ever sends without explicit approve → send in OzView.
  *
- * Human gate: nothing ever sends without explicit approve → send clicks in OzView.
+ * Touch schedule:
+ *   1 (Day 1)  — LinkedIn connection request (<300 chars, no pitch)
+ *   2 (Day 3)  — LinkedIn DM (<150 words, value-add, no ask)
+ *   3 (Day 7)  — Email (<100 words, specific format)
+ *   4 (Day 14) — LinkedIn follow-up (<100 words, reference something they posted)
+ *   5 (Day 21) — Final email (<75 words, "last one from me")
  */
 
 import { supabase, getCompanyName, fmt$, STAGE_LABELS, SERVICE_LABELS } from './supabase'
 
-// ─── Constants ─────────────────────────────────────────────────────────────────
+// ─── System prompt ───────────────────────────────────────────────────────────────
+const OZ_SYSTEM = `You are Oz, Outreach agent at GTM360 HQ.
+Write outreach that sounds like Sameer — senior GTM operator, peer to peer, never vendor to prospect.
+Use the intel provided as source material.
+Every message must reference something specific and real.
+Never generic. Never spray and pray.
+Output ONLY valid JSON, no markdown, no code fences, no explanation.
 
-const OZ_SYSTEM = `You are Oz, an outreach strategist for GTM360. You design precise, personalised 5-touch outreach sequences for B2B SaaS sales. You write for a fractional CRO firm targeting early-stage B2B founders (Seed–B, 10–150 employees) and scale-up CROs.
+Generate exactly 5 touches following these rules:
 
-Your sequences must:
-- Be hyper-specific to the company, not generic templates
-- Lead with a business pain, not a feature pitch
-- Vary channels: LinkedIn DM, email, LinkedIn comment, repeat if needed
-- Escalate warmth and specificity touch by touch
-- Include a subject line for every email touch
-- Never be longer than 120 words per message
-- Use first-person from "Sameer at GTM360" or "GTM-360.com"
+Touch 1 (Day 1): LinkedIn connection request
+- channel: "linkedin_connection"
+- Hard limit: 300 characters total
+- Reference one specific thing from the research
+- No pitch. Just a reason to connect.
 
-Output ONLY valid JSON matching this exact schema — no prose, no markdown fences:
+Touch 2 (Day 3): LinkedIn DM after connection
+- channel: "linkedin_dm"
+- Under 150 words
+- Lead with value or observation, zero ask
 
+Touch 3 (Day 7): Email
+- channel: "email"
+- Under 100 words
+- Line 1: something specific about them
+- Line 2: their real problem at this stage
+- Line 3: one thing GTM-360 would do about it
+- CTA: one ask, low friction (15-min call, reply with interest)
+- Must have a subject line
+
+Touch 4 (Day 14): LinkedIn follow-up
+- channel: "linkedin_dm"
+- Under 100 words
+- Reference something they recently posted or shared, or a milestone
+- No hard sell
+
+Touch 5 (Day 21): Final email
+- channel: "email"
+- Under 75 words
+- Open with "Last one from me —"
+- Direct ask or clean close
+- Must have a subject line
+
+JSON schema (output exactly this):
 {
   "company_name": "string",
   "contact_name": "string",
   "contact_email": "string or null",
   "contact_linkedin": "string or null",
   "deal_id": "string or null",
-  "touches": [
+  "sequence": [
     {
       "sequence_number": 1,
-      "channel": "linkedin_dm | email | linkedin_comment | phone | other",
-      "subject": "string (email only, null for others)",
-      "message_body": "string (max 120 words)",
-      "scheduled_for": "YYYY-MM-DD (Day 1, 3, 7, 14, 21 from today)"
+      "channel": "linkedin_connection | linkedin_dm | email",
+      "subject": "string (email only, null for linkedin)",
+      "message_body": "string",
+      "scheduled_for": "YYYY-MM-DD"
     }
   ]
 }`
 
-// Build the user prompt for a given deal + optional intel package
-function buildOzPrompt(deal, intel) {
-  const co     = getCompanyName(deal)
-  const today  = new Date().toISOString().slice(0, 10)
-  const days   = [1, 3, 7, 14, 21]
+// ─── CF Workers AI call ──────────────────────────────────────────────────────────
+async function callCfAI(messages, signal) {
+  const accountId = import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID
+  const apiToken  = import.meta.env.VITE_CLOUDFLARE_API_TOKEN
 
-  // Calculate scheduled dates
-  const dates = days.map(d => {
-    const dt = new Date()
+  if (!accountId || !apiToken) {
+    throw new Error(
+      'Add VITE_CLOUDFLARE_ACCOUNT_ID and VITE_CLOUDFLARE_API_TOKEN to .env.local to enable Oz.\n' +
+      'Same credentials as CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN in gtm360_agents.py.'
+    )
+  }
+
+  const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast`
+
+  const res = await fetch(url, {
+    method: 'POST',
+    signal,
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type':  'application/json',
+    },
+    body: JSON.stringify({ messages, max_tokens: 3000 }),
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body?.errors?.[0]?.message || `CF AI error ${res.status}`)
+  }
+
+  const data = await res.json()
+  if (!data.success) throw new Error(data?.errors?.[0]?.message || 'CF AI returned failure')
+
+  return data.result?.response || ''
+}
+
+// ─── Prompt builder ──────────────────────────────────────────────────────────────
+function buildOzPrompt(deal, intel) {
+  const co    = getCompanyName(deal)
+  const today = new Date()
+
+  // Scheduled dates: Day 1, 3, 7, 14, 21
+  const scheduledDates = [1, 3, 7, 14, 21].map(d => {
+    const dt = new Date(today)
     dt.setDate(dt.getDate() + d)
     return dt.toISOString().slice(0, 10)
   })
 
-  let intelContext = ''
+  let intelCtx = ''
   if (intel) {
     const snap = intel.company_snapshot
     if (snap) {
-      intelContext += `\nCompany intel (from /intel):\n`
-      if (snap.employees)       intelContext += `- Employees: ${snap.employees}\n`
-      if (snap.revenue)         intelContext += `- Revenue: ${snap.revenue}\n`
-      if (snap.funding)         intelContext += `- Funding: ${snap.funding}\n`
-      if (snap.business_model)  intelContext += `- Business model: ${snap.business_model}\n`
-      if (snap.icp_fit_score)   intelContext += `- ICP fit: ${snap.icp_fit_score}/10 (${snap.icp_fit_label || ''})\n`
+      if (snap.employees)      intelCtx += `- Employees: ${snap.employees}\n`
+      if (snap.revenue)        intelCtx += `- Revenue: ${snap.revenue}\n`
+      if (snap.funding)        intelCtx += `- Funding: ${snap.funding}\n`
+      if (snap.business_model) intelCtx += `- Model: ${snap.business_model}\n`
+      if (snap.icp_fit_score)  intelCtx += `- ICP fit: ${snap.icp_fit_score}/10\n`
     }
     if (intel.financial_pain_hook) {
-      intelContext += `- Financial pain hook: "${intel.financial_pain_hook}"\n`
+      intelCtx += `- Financial pain: "${intel.financial_pain_hook}"\n`
     }
     if (intel.access_strategy?.opening_line) {
-      intelContext += `- Proven opening line: "${intel.access_strategy.opening_line}"\n`
+      intelCtx += `- Opening line that works: "${intel.access_strategy.opening_line}"\n`
     }
     if (intel.access_strategy?.warm_paths?.length) {
-      intelContext += `- Warm paths: ${intel.access_strategy.warm_paths.join('; ')}\n`
+      intelCtx += `- Warm paths: ${intel.access_strategy.warm_paths.join('; ')}\n`
     }
     if (intel.buying_committee?.length) {
-      const primary = intel.buying_committee.find(p => p.priority === 'HIGH') || intel.buying_committee[0]
-      if (primary) {
-        intelContext += `- Primary buyer: ${primary.name || 'unknown'} (${primary.role})\n`
-        if (primary.linkedin) intelContext += `- LinkedIn: ${primary.linkedin}\n`
+      const top = intel.buying_committee.find(p => p.priority === 'HIGH') || intel.buying_committee[0]
+      if (top) {
+        intelCtx += `- Primary buyer: ${top.name || 'unknown'} (${top.role})\n`
+        if (top.linkedin) intelCtx += `- Their LinkedIn: ${top.linkedin}\n`
       }
     }
   }
 
-  return `Generate a 5-touch outreach sequence for:
+  const service = deal.service_line
+    ? `${deal.service_line}${SERVICE_LABELS?.[deal.service_line] ? ` — ${SERVICE_LABELS[deal.service_line]}` : ''}`
+    : 'unknown'
+
+  return `Generate a 5-touch outreach sequence for this prospect.
 
 Company: ${co}
 Domain: ${deal.company_domain || 'unknown'}
 Stage: ${STAGE_LABELS[deal.stage] || deal.stage}
-Service interest: ${deal.service_line}${SERVICE_LABELS?.[deal.service_line] ? ` (${SERVICE_LABELS[deal.service_line]})` : ''}
+Service interest: ${service}
 Deal value: ${fmt$(deal.amount)}
-Contact name: ${deal.contact_name || 'unknown'}
-Contact email: ${deal.contact_email || null}
-ICP fit: ${deal.icp_fit || 'unknown'}${deal.icp_score ? ` · ${deal.icp_score}/10` : ''}
-Today's date: ${today}
-${intelContext}
-Scheduled touch dates: Day 1 = ${dates[0]}, Day 3 = ${dates[1]}, Day 7 = ${dates[2]}, Day 14 = ${dates[3]}, Day 21 = ${dates[4]}
+Contact: ${deal.contact_name || 'unknown'}
+Contact email: ${deal.contact_email || 'unknown'}
+ICP fit: ${deal.icp_fit || 'unknown'}${deal.icp_score ? ` (${deal.icp_score}/10)` : ''}
+${intelCtx ? '\nIntel:\n' + intelCtx : ''}
+Scheduled dates (use exactly):
+- Touch 1: ${scheduledDates[0]}
+- Touch 2: ${scheduledDates[1]}
+- Touch 3: ${scheduledDates[2]}
+- Touch 4: ${scheduledDates[3]}
+- Touch 5: ${scheduledDates[4]}
 
-Return ONLY JSON, no other text.`
+Output ONLY the JSON. No other text.`
 }
 
-// ─── Step tracker helper ────────────────────────────────────────────────────────
-
-function makeStep(id, label, status = 'pending') {
-  return { id, label, status }
-}
-
+// ─── Step tracker ────────────────────────────────────────────────────────────────
+function makeStep(id, label, status = 'pending') { return { id, label, status } }
 function updateStep(setSteps, id, status, label) {
   setSteps(prev => prev.map(s =>
     s.id === id ? { ...s, status, ...(label ? { label } : {}) } : s
   ))
 }
 
-// ─── Main: generate sequence ────────────────────────────────────────────────────
-
+// ─── Main: generate sequence ─────────────────────────────────────────────────────
 /**
  * generateOutreachSequence(deal, intel, setSteps, signal)
- *
- * @param {object}   deal      — pipeline_snapshot row
- * @param {object}   intel     — intel package from generateIntel() (may be null)
- * @param {function} setSteps  — React state setter for step progress UI
- * @param {AbortSignal} signal — AbortController signal for cancellation
- * @returns {object[]}         — array of outreach_queue rows (not yet saved)
+ * Returns array of outreach_queue rows (already saved to Supabase).
  */
 export async function generateOutreachSequence(deal, intel, setSteps, signal) {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
-  if (!apiKey || apiKey === 'your-anthropic-api-key-here') {
-    throw new Error('Add VITE_ANTHROPIC_API_KEY to .env.local to enable Oz.')
-  }
-
-  // ── Step 1: Build prompt ──────────────────────────────────────────────────────
   const steps = [
-    makeStep('prompt',   'Building outreach context…'),
-    makeStep('claude',   'Claude generating sequence…', 'pending'),
-    makeStep('parse',    'Parsing 5-touch sequence…',   'pending'),
-    makeStep('save',     'Saving to outreach queue…',   'pending'),
+    makeStep('context', 'Building outreach context…'),
+    makeStep('oz',      'Oz writing sequence…',       'pending'),
+    makeStep('parse',   'Parsing 5-touch sequence…',  'pending'),
+    makeStep('save',    'Saving to queue…',            'pending'),
   ]
   setSteps(steps)
 
-  updateStep(setSteps, 'prompt', 'running')
+  // Step 1: Build prompt
+  updateStep(setSteps, 'context', 'running')
   const prompt = buildOzPrompt(deal, intel)
-  updateStep(setSteps, 'prompt', 'done')
+  updateStep(setSteps, 'context', 'done')
 
-  // ── Step 2: Call Claude (non-streaming, structured JSON) ─────────────────────
-  updateStep(setSteps, 'claude', 'running', 'Claude generating sequence…')
+  // Step 2: CF Workers AI call
+  updateStep(setSteps, 'oz', 'running', 'Oz writing sequence…')
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    signal,
-    headers: {
-      'x-api-key':                               apiKey,
-      'anthropic-version':                       '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-      'content-type':                            'application/json',
-    },
-    body: JSON.stringify({
-      model:      'claude-opus-4-7',
-      max_tokens: 4096,
-      stream:     false,
-      thinking:   { type: 'adaptive' },
-      system:     OZ_SYSTEM,
-      messages:   [{ role: 'user', content: prompt }],
-    }),
-  })
+  const rawResponse = await callCfAI([
+    { role: 'system', content: OZ_SYSTEM },
+    { role: 'user',   content: prompt },
+  ], signal)
 
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body?.error?.message || `Claude API error ${res.status}`)
-  }
+  updateStep(setSteps, 'oz', 'done', 'Sequence drafted')
 
-  const data = await res.json()
-  updateStep(setSteps, 'claude', 'done', 'Claude response received')
-
-  // ── Step 3: Parse JSON ────────────────────────────────────────────────────────
+  // Step 3: Parse
   updateStep(setSteps, 'parse', 'running')
-
-  // Extract text from content blocks (skip thinking blocks)
-  const textBlock = data.content?.find(b => b.type === 'text')
-  if (!textBlock?.text) throw new Error('Claude returned no text content')
 
   let parsed
   try {
-    // Strip any accidental markdown fences
-    const cleaned = textBlock.text
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/```\s*$/i, '')
-      .trim()
-    parsed = JSON.parse(cleaned)
+    const cleaned   = rawResponse
+      .replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+    parsed = JSON.parse(jsonMatch ? jsonMatch[0] : cleaned)
   } catch {
-    throw new Error('Claude returned invalid JSON — please retry')
+    throw new Error('Oz returned invalid JSON — retry with more intel context.')
   }
 
-  if (!parsed.touches?.length) {
-    throw new Error('Sequence missing touches array — please retry')
-  }
+  // Support both `sequence` (new) and `touches` (old Claude schema)
+  const touches = parsed.sequence || parsed.touches
+  if (!touches?.length) throw new Error('Sequence missing — please retry.')
 
-  updateStep(setSteps, 'parse', 'done', `${parsed.touches.length} touches parsed`)
+  updateStep(setSteps, 'parse', 'done', `${touches.length} touches parsed`)
 
-  // ── Step 4: Build Supabase rows ───────────────────────────────────────────────
-  updateStep(setSteps, 'save', 'running', 'Saving to outreach queue…')
+  // Step 4: Save to Supabase
+  updateStep(setSteps, 'save', 'running')
 
-  const rows = parsed.touches.map(t => ({
-    company_name:     parsed.company_name || getCompanyName(deal),
-    contact_name:     parsed.contact_name || deal.contact_name || null,
-    contact_email:    parsed.contact_email || deal.contact_email || null,
+  const rows = touches.map(t => ({
+    company_name:     parsed.company_name     || getCompanyName(deal),
+    contact_name:     parsed.contact_name     || deal.contact_name    || null,
+    contact_email:    parsed.contact_email    || deal.contact_email   || null,
     contact_linkedin: parsed.contact_linkedin || null,
-    deal_id:          deal.deal_id || null,
+    deal_id:          deal.deal_id            || null,
     sequence_number:  t.sequence_number,
     channel:          t.channel,
-    subject:          t.subject || null,
+    subject:          t.subject               || null,
     message_body:     t.message_body,
-    scheduled_for:    t.scheduled_for || null,
+    scheduled_for:    t.scheduled_for         || null,
     status:           'draft',
     created_by:       'Oz',
   }))
 
-  const { error } = await supabase
-    .from('outreach_queue')
-    .insert(rows)
+  const { error } = await supabase.from('outreach_queue').insert(rows)
+  if (error) throw new Error(`Save failed: ${error.message}`)
 
-  if (error) throw new Error(`Supabase save failed: ${error.message}`)
+  // Audit log
+  try {
+    await supabase.from('automation_log').insert({
+      agent_name:      'Oz',
+      automation_name: 'outreach_sequence_generated',
+      trigger_type:    'manual',
+      status:          'ok',
+      output_summary:  `${getCompanyName(deal)} · ${rows.length} touches`,
+    })
+  } catch { /* non-fatal */ }
 
-  updateStep(setSteps, 'save', 'done', `${rows.length} touches saved to queue`)
+  updateStep(setSteps, 'save', 'done', `${rows.length} touches saved`)
 
   return rows
 }
 
-// ─── Queue management helpers ───────────────────────────────────────────────────
+// ─── Queue management ────────────────────────────────────────────────────────────
 
-/** Fetch all outreach_queue rows, newest first */
 export async function fetchOutreachQueue() {
   const { data, error } = await supabase
     .from('outreach_queue')
@@ -243,7 +282,6 @@ export async function fetchOutreachQueue() {
   return data || []
 }
 
-/** Approve a touch: set status = 'approved', record approved_at */
 export async function approveTouch(id) {
   const { error } = await supabase
     .from('outreach_queue')
@@ -254,7 +292,6 @@ export async function approveTouch(id) {
   await logOutreachAction('approve', id)
 }
 
-/** Skip a touch: set status = 'skipped' */
 export async function skipTouch(id) {
   const { error } = await supabase
     .from('outreach_queue')
@@ -265,31 +302,24 @@ export async function skipTouch(id) {
   await logOutreachAction('skip', id)
 }
 
-/** Mark a touch as sent (only valid if already approved) */
 export async function markSent(id) {
   const { error } = await supabase
     .from('outreach_queue')
     .update({ status: 'sent', sent_at: new Date().toISOString() })
     .eq('id', id)
-    .in('status', ['approved']) // DB constraint enforced; this is belt-and-suspenders
+    .in('status', ['approved'])
 
   if (error) throw new Error(error.message)
   await logOutreachAction('send', id)
 }
 
-/** Update message_body (for inline edit) */
 export async function updateMessageBody(id, message_body, subject) {
   const patch = { message_body }
   if (subject !== undefined) patch.subject = subject
-  const { error } = await supabase
-    .from('outreach_queue')
-    .update(patch)
-    .eq('id', id)
-
+  const { error } = await supabase.from('outreach_queue').update(patch).eq('id', id)
   if (error) throw new Error(error.message)
 }
 
-/** Delete all draft touches for a company (regenerate flow) */
 export async function deleteCompanyDrafts(companyName) {
   const { error } = await supabase
     .from('outreach_queue')
@@ -300,8 +330,6 @@ export async function deleteCompanyDrafts(companyName) {
   if (error) throw new Error(error.message)
 }
 
-// ─── Audit log ─────────────────────────────────────────────────────────────────
-
 async function logOutreachAction(action, touchId) {
   try {
     await supabase.from('automation_log').insert({
@@ -311,7 +339,5 @@ async function logOutreachAction(action, touchId) {
       status:          'ok',
       output_summary:  `touch_id: ${touchId}`,
     })
-  } catch {
-    // Non-fatal — audit log failure shouldn't block the UI action
-  }
+  } catch { /* non-fatal */ }
 }
