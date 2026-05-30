@@ -49,13 +49,13 @@ Rules:
 
 // ─── CF Workers AI call ─────────────────────────────────────────────────────────
 async function callCfAI(messages, signal) {
-  const accountId = import.meta.env.VITE_CF_ACCOUNT_ID
-  const apiToken  = import.meta.env.VITE_CF_API_TOKEN
+  const accountId = import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID
+  const apiToken  = import.meta.env.VITE_CLOUDFLARE_API_TOKEN
 
   if (!accountId || !apiToken) {
     throw new Error(
-      'Add VITE_CF_ACCOUNT_ID and VITE_CF_API_TOKEN to .env.local to enable Memo.\n' +
-      'Get them at: dash.cloudflare.com → AI → Workers AI'
+      'Add VITE_CLOUDFLARE_ACCOUNT_ID and VITE_CLOUDFLARE_API_TOKEN to .env.local to enable Memo.\n' +
+      'Same credentials as CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN in gtm360_agents.py.'
     )
   }
 
