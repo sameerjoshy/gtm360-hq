@@ -12,6 +12,7 @@ import OKRsView from './views/OKRsView'
 import OzView from './views/OzView'
 import MemoView from './views/MemoView'
 import PropView from './views/PropView'
+import PipView from './views/PipView'
 import ErrorsView from './views/ErrorsView'
 import StubView from './views/StubView'
 
@@ -32,6 +33,7 @@ function AppRoutes() {
         <Route path="/outreach"    element={<OzView />} />
         <Route path="/memo"        element={<MemoView />} />
         <Route path="/proposals"   element={<PropView />} />
+        <Route path="/prospects"   element={<PipView />} />
         <Route path="/automations" element={<StubView title="Automations" />} />
         <Route path="/errors"      element={<ErrorsView />} />
         <Route path="/settings"    element={<StubView title="Settings" />} />

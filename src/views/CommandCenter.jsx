@@ -1,7 +1,9 @@
 import { Flag, ChevronRight, Circle, Clock, FileText } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { useAppStore } from '../store'
 import { fmt$, getCompanyName, STAGE_LABELS } from '../lib/supabase'
+import { countPendingSignals } from '../lib/pip'
 
 // ─── Skeleton block ───────────────────────────────────────────────────────────
 function Skel({ className = '' }) {
@@ -12,8 +14,8 @@ function SkeletonScreen() {
   return (
     <div className="p-5 space-y-4 max-w-[1400px]">
       <Skel className="h-[88px]" />
-      <div className="grid grid-cols-4 gap-3">
-        {[...Array(4)].map((_, i) => <Skel key={i} className="h-[72px]" />)}
+      <div className="grid grid-cols-5 gap-3">
+        {[...Array(5)].map((_, i) => <Skel key={i} className="h-[72px]" />)}
       </div>
       <div className="grid grid-cols-3 gap-4">
         {[...Array(3)].map((_, i) => <Skel key={i} className="h-60" />)}
@@ -130,6 +132,9 @@ function toArr(val) {
 export default function CommandCenter() {
   const navigate = useNavigate()
   const { brief, deals, okrs, content, finance, loading, lastRefresh } = useAppStore()
+  const [pendingSignals, setPendingSignals] = useState(0)
+
+  useEffect(() => { countPendingSignals().then(setPendingSignals) }, [])
 
   // ── Derived data ──
   const totalPipeline = deals.reduce((s, d) => s + (d.amount || 0), 0)
@@ -226,7 +231,7 @@ export default function CommandCenter() {
       )}
 
       {/* ── METRICS ROW ── */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-5 gap-3">
         <MetricCard
           label="Total Pipeline"
           value={fmt$(totalPipeline)}
@@ -254,6 +259,13 @@ export default function CommandCenter() {
           sub={outstanding > 0 ? `${fmt$(outstanding)} outstanding` : '$0 outstanding'}
           color={mtdRevenue > 0 ? 'text-ok' : 'text-text-sec'}
           onClick={() => navigate('/finn')}
+        />
+        <MetricCard
+          label="New Prospects"
+          value={pendingSignals}
+          sub={pendingSignals > 0 ? 'pending Pip review' : 'no pending signals'}
+          color={pendingSignals > 0 ? 'text-warn' : 'text-text-sec'}
+          onClick={() => navigate('/prospects')}
         />
       </div>
 

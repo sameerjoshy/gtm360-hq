@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Mic, Briefcase, Megaphone,
   DollarSign, Settings2, BarChart2, FileText,
   TrendingUp, Target, Zap, AlertTriangle, Settings,
-  Circle, Send, ClipboardList,
+  Circle, Send, ClipboardList, Search,
 } from 'lucide-react'
 
 const AGENTS = [
@@ -19,6 +19,7 @@ const WORKSPACE = [
   { path: '/outreach',  icon: Send,         label: 'Outreach'  },
   { path: '/memo',      icon: ClipboardList, label: 'Memo'     },
   { path: '/proposals', icon: FileText,     label: 'Proposals' },
+  { path: '/prospects', icon: Search,       label: 'Prospects' },
   { path: '/content',   icon: FileText,     label: 'Content'   },
   { path: '/finance',   icon: TrendingUp,   label: 'Finance'   },
   { path: '/okrs',      icon: Target,       label: 'OKRs'      },
