@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAppStore } from '../store'
 import { fmt$, getCompanyName, STAGE_LABELS } from '../lib/supabase'
 import { countPendingSignals } from '../lib/pip'
+import { countTodayNaraSignals } from '../lib/nara'
 
 // ─── Skeleton block ───────────────────────────────────────────────────────────
 function Skel({ className = '' }) {
@@ -133,8 +134,12 @@ export default function CommandCenter() {
   const navigate = useNavigate()
   const { brief, deals, okrs, content, finance, loading, lastRefresh } = useAppStore()
   const [pendingSignals, setPendingSignals] = useState(0)
+  const [naraSignals, setNaraSignals]       = useState(0)
 
-  useEffect(() => { countPendingSignals().then(setPendingSignals) }, [])
+  useEffect(() => {
+    countPendingSignals().then(setPendingSignals)
+    countTodayNaraSignals().then(setNaraSignals)
+  }, [])
 
   // ── Derived data ──
   const totalPipeline = deals.reduce((s, d) => s + (d.amount || 0), 0)
@@ -268,6 +273,20 @@ export default function CommandCenter() {
           onClick={() => navigate('/prospects')}
         />
       </div>
+
+      {/* ── NARA SIGNAL BADGE — appears when engagement detected today ── */}
+      {naraSignals > 0 && (
+        <button
+          onClick={() => navigate('/nurture')}
+          className="w-full flex items-center gap-3 px-4 py-2.5 bg-ok-light border border-ok/20 rounded-lg text-left hover:bg-ok/10 transition-colors"
+        >
+          <span className="w-2 h-2 rounded-full bg-ok animate-pulse shrink-0" />
+          <span className="text-sm font-medium text-ok">
+            Nara detected {naraSignals} engagement signal{naraSignals !== 1 ? 's' : ''} today
+          </span>
+          <ChevronRight size={14} className="text-ok ml-auto shrink-0" />
+        </button>
+      )}
 
       {/* ── THREE COLUMNS ── */}
       <div className="grid grid-cols-3 gap-4">
