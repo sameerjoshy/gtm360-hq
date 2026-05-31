@@ -21,6 +21,7 @@ const WORKSPACE = [
   { path: '/proposals', icon: FileText,     label: 'Proposals' },
   { path: '/prospects', icon: Search,       label: 'Prospects' },
   { path: '/nurture',   icon: Bell,         label: 'Nurture'   },
+  { path: '/trends',    icon: TrendingUp,   label: 'Trends'    },
   { path: '/content',   icon: FileText,     label: 'Content'   },
   { path: '/finance',   icon: TrendingUp,   label: 'Finance'   },
   { path: '/okrs',      icon: Target,       label: 'OKRs'      },
