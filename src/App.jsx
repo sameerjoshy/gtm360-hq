@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
+import { UIProvider } from './context/UIContext'
+import { ToastProvider } from './context/ToastContext'
 import Landing from './pages/Landing'
 import CommandCenter from './views/CommandCenter'
 import SamView from './views/SamView'
@@ -51,12 +53,16 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <ErrorBoundary>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/*" element={<AppRoutes />} />
-        </Routes>
-      </ErrorBoundary>
+      <UIProvider>
+        <ToastProvider>
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/*" element={<AppRoutes />} />
+            </Routes>
+          </ErrorBoundary>
+        </ToastProvider>
+      </UIProvider>
     </BrowserRouter>
   )
 }

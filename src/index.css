@@ -5,84 +5,154 @@
 @layer base {
   * { box-sizing: border-box; }
 
+  html { scroll-behavior: smooth; }
+
   body {
     @apply bg-bg-base text-text-pri font-body;
     font-size: 14px;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { @apply bg-bdr rounded-full; }
-  ::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar         { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track   { background: transparent; }
+  ::-webkit-scrollbar-thumb   { @apply bg-bdr rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { background: #3A3A50; }
+
+  /* ── Focus rings — keyboard navigation ── */
+  *:focus-visible {
+    outline: 2px solid rgba(255,77,0,0.6);
+    outline-offset: 2px;
+  }
 }
 
 @layer components {
 
-  /* ── Card ─────────────────────────────────────────────────── */
+  /* ── Card ──────────────────────────────────────────────────────── */
   .card {
     @apply bg-bg-s1 border border-bdr rounded-xl;
-    box-shadow: 0 1px 3px 0 rgba(0,0,0,0.06), 0 1px 2px -1px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
+  }
+  .card-hover:hover, .card:has(button:hover).card-interactive {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
   }
 
-  /* ── Badges ───────────────────────────────────────────────── */
+  /* ── Badges — dark-safe, use predefined light tokens ───────────── */
   .badge-orange {
-    @apply bg-orange-50 text-orange-600 text-xxs font-mono px-2 py-0.5 rounded-md border border-orange-200;
+    background: var(--badge-orange-bg, rgba(255,77,0,0.12));
+    @apply text-gtm-orange text-xxs font-mono px-2 py-0.5 rounded-md;
+    border: 1px solid rgba(255,77,0,0.25);
   }
   .badge-green {
-    @apply bg-ok-light text-ok text-xxs font-mono px-2 py-0.5 rounded-md border border-emerald-200;
+    @apply bg-ok-light text-ok text-xxs font-mono px-2 py-0.5 rounded-md;
+    border: 1px solid rgba(0,230,118,0.25);
   }
   .badge-warn {
-    @apply bg-warn-light text-warn text-xxs font-mono px-2 py-0.5 rounded-md border border-amber-200;
+    @apply bg-warn-light text-warn text-xxs font-mono px-2 py-0.5 rounded-md;
+    border: 1px solid rgba(255,214,0,0.25);
   }
   .badge-danger {
-    @apply bg-danger-light text-danger text-xxs font-mono px-2 py-0.5 rounded-md border border-red-200;
+    @apply bg-danger-light text-danger text-xxs font-mono px-2 py-0.5 rounded-md;
+    border: 1px solid rgba(255,68,68,0.25);
   }
   .badge-muted {
-    @apply bg-slate-100 text-text-sec text-xxs font-mono px-2 py-0.5 rounded-md border border-slate-200;
+    @apply bg-bg-s2 text-text-mut text-xxs font-mono px-2 py-0.5 rounded-md border border-bdr;
   }
   .badge-indigo {
-    @apply bg-accent-light text-accent text-xxs font-mono px-2 py-0.5 rounded-md border border-indigo-200;
+    @apply bg-accent-light text-accent text-xxs font-mono px-2 py-0.5 rounded-md;
+    border: 1px solid rgba(255,77,0,0.25);
+  }
+  .badge-info {
+    @apply bg-info-light text-info text-xxs font-mono px-2 py-0.5 rounded-md;
+    border: 1px solid rgba(41,121,255,0.25);
   }
 
-  /* ── Buttons ──────────────────────────────────────────────── */
+  /* ── Buttons ────────────────────────────────────────────────────── */
   .btn-primary {
     @apply bg-accent hover:bg-accent-hover text-white text-sm font-medium
-           px-4 py-2 rounded-lg transition-colors;
+           px-4 py-2 rounded-lg transition-all cursor-pointer;
+    &:active { transform: scale(0.97); }
   }
   .btn-ghost {
     @apply text-text-sec hover:text-text-pri hover:bg-bg-s2 text-sm
-           px-4 py-2 rounded-lg transition-colors;
+           px-4 py-2 rounded-lg transition-all cursor-pointer;
+    &:active { transform: scale(0.97); }
   }
   .btn-orange {
-    @apply bg-gtm-orange hover:bg-orange-600 text-white text-sm font-medium
-           px-4 py-2 rounded-lg transition-colors;
+    @apply bg-gtm-orange hover:bg-accent-hover text-white text-sm font-medium
+           px-4 py-2 rounded-lg transition-all cursor-pointer;
+    &:active { transform: scale(0.97); }
+  }
+  .btn-danger {
+    @apply bg-danger/10 hover:bg-danger/20 text-danger border border-danger/25
+           text-sm font-medium px-4 py-2 rounded-lg transition-all cursor-pointer;
+    &:active { transform: scale(0.97); }
   }
 
-  /* ── Input ────────────────────────────────────────────────── */
+  /* ── Input ──────────────────────────────────────────────────────── */
   .input-base {
-    @apply bg-bg-s1 border border-bdr rounded-lg text-sm text-text-pri
+    @apply bg-bg-s2 border border-bdr rounded-lg text-sm text-text-pri
            placeholder-text-mut px-3 py-2 outline-none
-           focus:border-accent focus:ring-2 focus:ring-accent/10
+           focus:border-accent/50 focus:ring-2 focus:ring-accent/10
            transition-all w-full;
   }
 
-  /* ── Progress bar ─────────────────────────────────────────── */
+  /* ── Progress ───────────────────────────────────────────────────── */
   .progress-track {
-    @apply h-1.5 bg-slate-100 rounded-full overflow-hidden;
+    @apply h-1.5 bg-bg-s2 rounded-full overflow-hidden;
+    border: 1px solid rgba(255,255,255,0.04);
   }
   .progress-fill {
-    @apply h-full rounded-full transition-all duration-500;
+    @apply h-full rounded-full transition-all duration-700;
   }
 
-  /* ── Section label (content area) ────────────────────────── */
+  /* ── Section label ──────────────────────────────────────────────── */
   .section-label {
     @apply text-xxs font-mono text-text-mut uppercase px-4 py-1;
     letter-spacing: 2px;
   }
 
-  /* ── Agent chip (used in sidebar — overridden by sidebar context) */
+  /* ── Skeleton shimmer ───────────────────────────────────────────── */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      #16161F 25%,
+      #1E1E2A 50%,
+      #16161F 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s linear infinite;
+    border-radius: 6px;
+  }
+
+  /* ── Route view fade ────────────────────────────────────────────── */
+  .view-enter {
+    animation: fadeIn 0.18s ease forwards;
+  }
+
+  /* ── Table base ─────────────────────────────────────────────────── */
+  .table-row-hover {
+    @apply transition-colors cursor-pointer;
+    &:hover { background: rgba(255,255,255,0.025); }
+  }
+
+  /* ── Agent chip ─────────────────────────────────────────────────── */
   .agent-chip {
     @apply flex items-center gap-1 text-xxs font-mono text-text-mut;
   }
+
+  /* ── Live pulse badge ───────────────────────────────────────────── */
+  .live-dot {
+    @apply w-1.5 h-1.5 rounded-full bg-ok;
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+}
+
+/* ── Custom utility: shimmer keyframe available globally ── */
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
