@@ -1,67 +1,97 @@
 /**
- * memo.js — Meeting Intel Agent
+ * memo.js — Meeting Intelligence Agent
  *
- * Analyzes a call transcript and extracts structured intelligence:
- * commitments, buying signals, objections, next steps, stage recommendation,
- * follow-up email draft, CRM notes, and Sam brief update.
+ * Uses Cloudflare Workers AI (llama-3.3-70b) to extract structured intel
+ * from meeting notes: commitments, signals, objections, next steps, stage rec,
+ * follow-up email draft, and CRM update draft.
  *
- * Human gate: Follow-up email and CRM update require explicit approval
- * before the user acts on them. Nothing sends automatically.
+ * Human gate: follow-up email and CRM update require explicit approval.
+ * Nothing writes to HubSpot automatically.
  */
 
 import { supabase } from './supabase'
 
-// ─── Claude system prompt ───────────────────────────────────────────────────────
+// ─── Stage mapping ──────────────────────────────────────────────────────────────
+const STAGE_MAP = {
+  Radar:     'appointmentscheduled',
+  Connected: 'qualifiedtobuy',
+  Engaged:   'presentationscheduled',
+  Discovery: 'decisionmakerboughtin',
+  Proposal:  'contractsent',
+}
 
-const MEMO_SYSTEM = `You are Memo, the Meeting Intel analyst for GTM360. After every client or prospect call, you analyze the transcript or call notes and extract structured intelligence for the CRO and Chief of Staff.
+// ─── System prompt ──────────────────────────────────────────────────────────────
+const MEMO_SYSTEM = `You are Memo, Meeting Intelligence agent at GTM360 HQ.
+Extract structured intelligence from meeting notes.
+Output ONLY valid JSON, no markdown, no code fences, no explanation.
 
-Your job:
-1. Extract commitments — what was promised, by whom, by when
-2. Identify buying signals — positive indicators with strength and exact quote
-3. Flag objections — obstacles raised with a suggested response
-4. Clarify next steps — specific actions with owners and due dates
-5. Recommend deal stage — based on what you heard, where should this deal move?
-6. Draft follow-up email — professional, specific, max 150 words, sent from "Sameer at GTM-360"
-7. Write CRM notes — factual, for HubSpot deal record, max 100 words
-8. Write Sam brief update — one sentence for the next morning brief
+Extract this exact JSON structure:
+{
+  "commitments_by_sameer": ["string — what Sameer committed to do"],
+  "commitments_by_prospect": ["string — what the prospect committed to do"],
+  "buying_signals": ["string — positive indicator observed"],
+  "objections_raised": ["string — concern or blocker raised"],
+  "pain_points_confirmed": ["string — business pain confirmed in conversation"],
+  "next_steps": ["string — specific next action with owner and timing"],
+  "deal_stage_recommendation": "Radar|Connected|Engaged|Discovery|Proposal",
+  "confidence": "HIGH|MEDIUM|LOW",
+  "followup_subject": "string — email subject line",
+  "followup_body": "string — under 150 words, peer to peer tone, specific to this conversation"
+}
 
 Rules:
 - Be specific to what was actually said — no generic observations
-- Buying signal strength: HIGH (explicit budget/timeline/authority), MEDIUM (interest/engagement), LOW (curiosity only)
-- Stage recommendations use: Radar, Connected, Engaged, Discovery, Proposal, Active
+- Buying signals must be real indicators (budget, timeline, authority, clear pain)
+- Objections must be actual concerns raised, not hypothetical
+- Next steps must have a clear owner (Sameer / prospect name)
 - Follow-up email opens with a specific reference to the conversation
-- If the transcript is too short/vague, flag it in stage_change_rationale
+- If notes are too sparse, set confidence to LOW and explain in objections_raised`
 
-Output ONLY valid JSON — no prose, no markdown fences, no explanation:
+// ─── CF Workers AI call ─────────────────────────────────────────────────────────
+async function callCfAI(messages, signal) {
+  const accountId = import.meta.env.VITE_CLOUDFLARE_ACCOUNT_ID
+  const apiToken  = import.meta.env.VITE_CLOUDFLARE_API_TOKEN
 
-{
-  "company_name": "string",
-  "contact_name": "string or null",
-  "meeting_type": "discovery | check_in | proposal | demo | other",
-  "commitments": [
-    { "who": "string", "what": "string", "by_when": "string or null" }
-  ],
-  "buying_signals": [
-    { "signal": "string", "strength": "HIGH | MEDIUM | LOW", "quote": "string or null" }
-  ],
-  "objections": [
-    { "objection": "string", "response_suggested": "string" }
-  ],
-  "next_steps": [
-    { "action": "string", "owner": "string", "due_date": "string or null" }
-  ],
-  "deal_stage_recommended": "string or null",
-  "stage_change_rationale": "string or null",
-  "follow_up_email_subject": "string",
-  "follow_up_email_body": "string",
-  "crm_update_notes": "string",
-  "sam_brief_update": "string"
-}`
+  if (!accountId || !apiToken) {
+    throw new Error(
+      'Add VITE_CLOUDFLARE_ACCOUNT_ID and VITE_CLOUDFLARE_API_TOKEN to .env.local to enable Memo.\n' +
+      'Same credentials as CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN in gtm360_agents.py.'
+    )
+  }
 
-// ─── Step tracker ───────────────────────────────────────────────────────────────
+  const url = `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast`
 
-function makeStep(id, label, status = 'pending') {
-  return { id, label, status }
+  const res = await fetch(url, {
+    method: 'POST',
+    signal,
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type':  'application/json',
+    },
+    body: JSON.stringify({ messages }),
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    const msg  = body?.errors?.[0]?.message || body?.result?.response || `CF AI error ${res.status}`
+    throw new Error(msg)
+  }
+
+  const data = await res.json()
+  if (!data.success) {
+    throw new Error(data?.errors?.[0]?.message || 'CF AI returned failure')
+  }
+
+  return data.result?.response || ''
+}
+
+// ─── Step helpers ───────────────────────────────────────────────────────────────
+function makeSteps() {
+  return [
+    { id: 'extract',  label: 'Extracting intelligence…',  status: 'pending' },
+    { id: 'followup', label: 'Drafting follow-up email…',  status: 'pending' },
+    { id: 'crm',      label: 'Preparing CRM update draft…', status: 'pending' },
+  ]
 }
 
 function updateStep(setSteps, id, status, label) {
@@ -70,175 +100,201 @@ function updateStep(setSteps, id, status, label) {
   ))
 }
 
-// ─── Main: analyze transcript ───────────────────────────────────────────────────
-
+// ─── Main: analyze meeting notes ────────────────────────────────────────────────
 /**
- * analyzeMeeting(params, setSteps, signal)
- *
- * @param {object} params        — { transcript, companyName, contactName, meetingDate, meetingType, dealId }
- * @param {function} setSteps    — React state setter for step progress
- * @param {AbortSignal} signal   — AbortController signal
- * @returns {object}             — Parsed Memo intel object (not yet saved)
+ * analyzeMeeting({ transcript, companyName, meetingDate, dealId }, setSteps, signal)
+ * Returns { intel, crmDraft } — not yet saved.
  */
 export async function analyzeMeeting(params, setSteps, signal) {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
-  if (!apiKey || apiKey === 'your-anthropic-api-key-here') {
-    throw new Error('Add VITE_ANTHROPIC_API_KEY to .env.local to enable Memo.')
-  }
+  const { transcript, companyName, meetingDate } = params
 
-  const { transcript, companyName, contactName, meetingDate, meetingType } = params
+  if (!transcript?.trim()) throw new Error('Meeting notes are required.')
 
-  if (!transcript?.trim()) throw new Error('Transcript is required.')
-
-  // ── Steps ──────────────────────────────────────────────────────────────────
-  const steps = [
-    makeStep('read',   'Reading transcript…'),
-    makeStep('claude', 'Memo extracting intel…',    'pending'),
-    makeStep('parse',  'Parsing structured output…', 'pending'),
-  ]
+  const steps = makeSteps()
   setSteps(steps)
 
-  updateStep(setSteps, 'read', 'running')
+  // ── Step 1: Extract intelligence ────────────────────────────────────────────
+  updateStep(setSteps, 'extract', 'running')
 
   const context = [
     companyName  ? `Company: ${companyName}` : null,
-    contactName  ? `Contact: ${contactName}` : null,
-    meetingDate  ? `Date: ${meetingDate}` : null,
-    meetingType  ? `Meeting type: ${meetingType}` : null,
+    meetingDate  ? `Meeting date: ${meetingDate}` : null,
   ].filter(Boolean).join('\n')
 
-  const prompt = `${context ? context + '\n\n' : ''}Transcript / call notes:\n\n${transcript.trim()}`
-  updateStep(setSteps, 'read', 'done', `${transcript.trim().split(/\s+/).length} words read`)
+  const userContent = `${context ? context + '\n\n' : ''}Meeting notes:\n\n${transcript.trim()}`
 
-  // ── Claude call ─────────────────────────────────────────────────────────────
-  updateStep(setSteps, 'claude', 'running', 'Memo extracting intel…')
+  const rawResponse = await callCfAI([
+    { role: 'system', content: MEMO_SYSTEM },
+    { role: 'user',   content: userContent },
+  ], signal)
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    signal,
-    headers: {
-      'x-api-key':                                 apiKey,
-      'anthropic-version':                         '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-      'content-type':                              'application/json',
-    },
-    body: JSON.stringify({
-      model:      'claude-opus-4-7',
-      max_tokens: 4096,
-      stream:     false,
-      thinking:   { type: 'adaptive' },
-      system:     MEMO_SYSTEM,
-      messages:   [{ role: 'user', content: prompt }],
-    }),
-  })
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body?.error?.message || `Claude API error ${res.status}`)
-  }
-
-  const data = await res.json()
-  updateStep(setSteps, 'claude', 'done', 'Intel extracted')
-
-  // ── Parse ───────────────────────────────────────────────────────────────────
-  updateStep(setSteps, 'parse', 'running')
-
-  const textBlock = data.content?.find(b => b.type === 'text')
-  if (!textBlock?.text) throw new Error('Claude returned no text content')
-
-  let parsed
+  // Parse JSON — strip any accidental markdown fences
+  let intel
   try {
-    const cleaned = textBlock.text
+    const cleaned = rawResponse
       .replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim()
-    parsed = JSON.parse(cleaned)
+    // Extract JSON object if surrounded by prose
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+    intel = JSON.parse(jsonMatch ? jsonMatch[0] : cleaned)
   } catch {
-    throw new Error('Claude returned invalid JSON — please retry')
+    throw new Error('Memo returned invalid JSON — please retry with more detailed notes.')
   }
 
-  updateStep(setSteps, 'parse', 'done', 'Structured intel ready')
+  updateStep(setSteps, 'extract', 'done', `${(intel.buying_signals || []).length} signals · ${(intel.objections_raised || []).length} objections`)
 
-  return parsed
+  // ── Step 2: Follow-up draft (already in intel) ──────────────────────────────
+  updateStep(setSteps, 'followup', 'running')
+  // followup_subject + followup_body already extracted above
+  if (!intel.followup_subject) intel.followup_subject = `Follow-up — ${companyName || 'our conversation'}`
+  if (!intel.followup_body)   intel.followup_body   = 'No follow-up generated. Please add notes and retry.'
+  updateStep(setSteps, 'followup', 'done', 'Follow-up email drafted')
+
+  // ── Step 3: Build CRM update draft ─────────────────────────────────────────
+  updateStep(setSteps, 'crm', 'running')
+
+  const stageRec   = intel.deal_stage_recommendation || 'Radar'
+  const hsStage    = STAGE_MAP[stageRec] || 'appointmentscheduled'
+  const today      = meetingDate || new Date().toISOString().slice(0, 10)
+  const nextStep   = intel.next_steps?.[0] || 'Schedule follow-up'
+  const summary    = [
+    intel.pain_points_confirmed?.slice(0, 2).join('. '),
+    intel.buying_signals?.slice(0, 1)[0],
+  ].filter(Boolean).join(' ') || `Meeting with ${companyName} on ${today}.`
+
+  const crmDraft = {
+    dealstage:          hsStage,
+    last_activity_date: today,
+    hs_next_step:       nextStep,
+    description:        summary.slice(0, 400),
+  }
+
+  updateStep(setSteps, 'crm', 'done', 'CRM update draft ready')
+
+  return { intel, crmDraft }
 }
 
 // ─── Persistence ────────────────────────────────────────────────────────────────
 
 /**
- * saveMeetingNote(params, intel)
- * Saves raw transcript + extracted intel to meeting_notes.
- * Returns the saved row id.
+ * saveMeetingIntel(params, intel, crmDraft)
+ * Saves to meeting_intel table. Returns saved row id.
  */
-export async function saveMeetingNote(params, intel) {
-  const { transcript, companyName, contactName, meetingDate, meetingType, dealId } = params
+export async function saveMeetingIntel(params, intel, crmDraft) {
+  const { transcript, companyName, contactNames, meetingDate, dealId } = params
 
   const row = {
-    deal_id:                 dealId || null,
-    company_name:            intel.company_name || companyName,
-    contact_name:            intel.contact_name || contactName || null,
-    meeting_date:            meetingDate || new Date().toISOString().slice(0, 10),
-    meeting_type:            intel.meeting_type || meetingType || 'discovery',
-    transcript,
-    commitments:             intel.commitments            || [],
-    buying_signals:          intel.buying_signals         || [],
-    objections:              intel.objections             || [],
-    next_steps:              intel.next_steps             || [],
-    deal_stage_recommended:  intel.deal_stage_recommended || null,
-    stage_change_rationale:  intel.stage_change_rationale || null,
-    follow_up_email_subject: intel.follow_up_email_subject|| null,
-    follow_up_email_body:    intel.follow_up_email_body   || null,
-    crm_update_notes:        intel.crm_update_notes       || null,
-    sam_brief_update:        intel.sam_brief_update       || null,
-    status:                  'extracted',
-    created_by:              'Memo',
+    meeting_date:             meetingDate || new Date().toISOString().slice(0, 10),
+    company_name:             companyName || null,
+    contact_names:            contactNames?.filter(Boolean) || [],
+    deal_id:                  dealId || null,
+    raw_notes:                transcript,
+    commitments_by_sameer:    intel.commitments_by_sameer    || [],
+    commitments_by_prospect:  intel.commitments_by_prospect  || [],
+    buying_signals:           intel.buying_signals            || [],
+    objections_raised:        intel.objections_raised         || [],
+    pain_points_confirmed:    intel.pain_points_confirmed     || [],
+    next_steps:               intel.next_steps                || [],
+    deal_stage_recommendation: intel.deal_stage_recommendation || 'Radar',
+    followup_subject:         intel.followup_subject          || null,
+    followup_body:            intel.followup_body             || null,
+    crm_update_draft:         crmDraft                        || null,
+    confidence:               intel.confidence                || 'MEDIUM',
+    followup_approved:        false,
+    crm_update_approved:      false,
   }
 
   const { data, error } = await supabase
-    .from('meeting_notes')
+    .from('meeting_intel')
     .insert(row)
     .select('id')
     .single()
 
   if (error) throw new Error(`Save failed: ${error.message}`)
+
+  // Audit log (non-fatal)
+  try {
+    await supabase.from('automation_log').insert({
+      agent_name:      'Memo',
+      automation_name: 'meeting_intel_extracted',
+      trigger_type:    'manual',
+      status:          'ok',
+      output_summary:  `${companyName} · ${intel.deal_stage_recommendation} · ${intel.confidence}`,
+    })
+  } catch { /* non-fatal */ }
+
   return data.id
 }
 
-/** Approve a meeting note (human has reviewed and confirmed) */
-export async function approveMeetingNote(id) {
+/** Approve follow-up email (marks for human action — nothing auto-sends) */
+export async function approveFollowUp(id) {
   const { error } = await supabase
-    .from('meeting_notes')
-    .update({ status: 'approved', approved_at: new Date().toISOString() })
+    .from('meeting_intel')
+    .update({ followup_approved: true })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+}
+
+/** Approve CRM update (saves decision — Phase 2 will push to HubSpot) */
+export async function approveCrmUpdate(id) {
+  const { error } = await supabase
+    .from('meeting_intel')
+    .update({ crm_update_approved: true, crm_updated_at: new Date().toISOString() })
     .eq('id', id)
 
   if (error) throw new Error(error.message)
 
-  // Audit log
   try {
     await supabase.from('automation_log').insert({
       agent_name:      'Memo',
-      automation_name: 'meeting_note_approved',
+      automation_name: 'crm_update_approved',
       trigger_type:    'manual',
       status:          'ok',
-      output_summary:  `note_id: ${id}`,
+      output_summary:  `meeting_intel_id: ${id}`,
     })
   } catch { /* non-fatal */ }
 }
 
-/** Fetch all meeting notes, newest first */
-export async function fetchMeetingNotes() {
+/** Update follow-up email text (before approval) */
+export async function updateFollowUp(id, subject, body) {
+  const { error } = await supabase
+    .from('meeting_intel')
+    .update({ followup_subject: subject, followup_body: body })
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+}
+
+/** Fetch all meetings, newest first */
+export async function fetchMeetingIntel() {
   const { data, error } = await supabase
-    .from('meeting_notes')
-    .select('id, company_name, contact_name, meeting_date, meeting_type, status, approved_at, created_at, deal_stage_recommended, sam_brief_update, buying_signals, next_steps, commitments, objections, follow_up_email_subject, follow_up_email_body, crm_update_notes, stage_change_rationale')
+    .from('meeting_intel')
+    .select(`
+      id, meeting_date, company_name, contact_names, deal_id,
+      deal_stage_recommendation, confidence,
+      commitments_by_sameer, commitments_by_prospect,
+      buying_signals, objections_raised, pain_points_confirmed, next_steps,
+      followup_subject, followup_body, followup_approved,
+      crm_update_draft, crm_update_approved, crm_updated_at,
+      created_at
+    `)
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(error.message)
   return data || []
 }
 
-/** Update email body (inline edit before approve) */
-export async function updateFollowUp(id, subject, body) {
-  const { error } = await supabase
-    .from('meeting_notes')
-    .update({ follow_up_email_subject: subject, follow_up_email_body: body })
-    .eq('id', id)
+/** Count meetings processed this week (for Ola health panel) */
+export async function countMeetingsThisWeek() {
+  const monday = new Date()
+  monday.setDate(monday.getDate() - monday.getDay() + 1)
+  monday.setHours(0, 0, 0, 0)
 
-  if (error) throw new Error(error.message)
+  const { count, error } = await supabase
+    .from('meeting_intel')
+    .select('id', { count: 'exact', head: true })
+    .gte('created_at', monday.toISOString())
+
+  if (error) return 0
+  return count || 0
 }

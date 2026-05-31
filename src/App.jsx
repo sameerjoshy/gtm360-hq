@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
+import { UIProvider } from './context/UIContext'
+import { ToastProvider } from './context/ToastContext'
 import Landing from './pages/Landing'
 import CommandCenter from './views/CommandCenter'
 import SamView from './views/SamView'
@@ -11,6 +13,11 @@ import OlaView from './views/OlaView'
 import OKRsView from './views/OKRsView'
 import OzView from './views/OzView'
 import MemoView from './views/MemoView'
+import PropView from './views/PropView'
+import PipView from './views/PipView'
+import NaraView from './views/NaraView'
+import AriaView from './views/AriaView'
+import CleoView from './views/CleoView'
 import ErrorsView from './views/ErrorsView'
 import StubView from './views/StubView'
 
@@ -30,6 +37,11 @@ function AppRoutes() {
         <Route path="/okrs"        element={<OKRsView />} />
         <Route path="/outreach"    element={<OzView />} />
         <Route path="/memo"        element={<MemoView />} />
+        <Route path="/proposals"   element={<PropView />} />
+        <Route path="/prospects"   element={<PipView />} />
+        <Route path="/nurture"     element={<NaraView />} />
+        <Route path="/trends"      element={<AriaView />} />
+        <Route path="/cleanup"     element={<CleoView />} />
         <Route path="/automations" element={<StubView title="Automations" />} />
         <Route path="/errors"      element={<ErrorsView />} />
         <Route path="/settings"    element={<StubView title="Settings" />} />
@@ -41,12 +53,16 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <ErrorBoundary>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/*" element={<AppRoutes />} />
-        </Routes>
-      </ErrorBoundary>
+      <UIProvider>
+        <ToastProvider>
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/*" element={<AppRoutes />} />
+            </Routes>
+          </ErrorBoundary>
+        </ToastProvider>
+      </UIProvider>
     </BrowserRouter>
   )
 }

@@ -22,11 +22,12 @@ const STATUS_CONFIG = {
 }
 
 const CHANNEL_CONFIG = {
-  linkedin_dm:      { label: 'LinkedIn DM',      icon: Linkedin,     color: 'text-info' },
-  email:            { label: 'Email',             icon: Mail,         color: 'text-gtm-orange' },
-  linkedin_comment: { label: 'LinkedIn Comment',  icon: Linkedin,     color: 'text-text-sec' },
-  phone:            { label: 'Phone',             icon: Phone,        color: 'text-ok' },
-  other:            { label: 'Other',             icon: MessageSquare, color: 'text-text-mut' },
+  linkedin_connection: { label: 'LinkedIn Connect', icon: Linkedin,      color: 'text-info'     },
+  linkedin_dm:         { label: 'LinkedIn DM',      icon: Linkedin,      color: 'text-info'     },
+  email:               { label: 'Email',             icon: Mail,          color: 'text-gtm-orange' },
+  linkedin_comment:    { label: 'LinkedIn Comment',  icon: Linkedin,      color: 'text-text-sec' },
+  phone:               { label: 'Phone',             icon: Phone,         color: 'text-ok'       },
+  other:               { label: 'Other',             icon: MessageSquare, color: 'text-text-mut' },
 }
 
 const STATUS_TABS = ['All', 'Draft', 'Approved', 'Sent', 'Replied', 'Skipped']
@@ -453,16 +454,28 @@ export default function OzView() {
                   )}
                 </div>
 
-                {/* Word count when editing */}
-                {editing && (
-                  <div className={`text-right text-xxs font-mono ${
-                    editBody.split(/\s+/).filter(Boolean).length > 120
-                      ? 'text-danger'
-                      : 'text-text-mut'
-                  }`}>
-                    {editBody.split(/\s+/).filter(Boolean).length} / 120 words
-                  </div>
-                )}
+                {/* Word/char count when editing */}
+                {editing && (() => {
+                  const isConnect = selected?.channel === 'linkedin_connection'
+                  const limit = selected?.sequence_number === 5 ? 75
+                    : selected?.channel === 'email' ? 100
+                    : selected?.channel === 'linkedin_dm' ? (selected?.sequence_number === 2 ? 150 : 100)
+                    : 120
+                  if (isConnect) {
+                    const chars = editBody.length
+                    return (
+                      <div className={`text-right text-xxs font-mono ${chars > 300 ? 'text-danger' : 'text-text-mut'}`}>
+                        {chars} / 300 chars
+                      </div>
+                    )
+                  }
+                  const words = editBody.split(/\s+/).filter(Boolean).length
+                  return (
+                    <div className={`text-right text-xxs font-mono ${words > limit ? 'text-danger' : 'text-text-mut'}`}>
+                      {words} / {limit} words
+                    </div>
+                  )
+                })()}
 
                 {/* Response notes (if any) */}
                 {selected.response_notes && (

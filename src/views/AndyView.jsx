@@ -343,9 +343,16 @@ export default function AndyView() {
                   }`}
                 >
                   <td className="px-4 py-2.5 text-text-pri max-w-[320px]">
-                    <div className="truncate text-xs">
-                      {(item.raw_observation || item.draft || '—').slice(0, 80)}
-                      {(item.raw_observation || item.draft || '').length > 80 ? '…' : ''}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <div className="truncate text-xs">
+                        {(item.raw_observation || item.draft || '—').slice(0, 80)}
+                        {(item.raw_observation || item.draft || '').length > 80 ? '…' : ''}
+                      </div>
+                      {item.observation_source === 'Aria' && (
+                        <span className="text-xxs font-mono px-1 py-0.5 rounded bg-gtm-orange/10 text-gtm-orange shrink-0">
+                          via Aria
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-2.5 text-text-sec whitespace-nowrap">{item.post_format || '—'}</td>

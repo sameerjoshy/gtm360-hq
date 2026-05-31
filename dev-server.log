@@ -1,0 +1,50 @@
+
+> gtm360-hq@0.1.0 dev
+> vite
+
+
+  [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m1865[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m3000[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[2m7:44:51 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/views/OzView.jsx, /src/views/RexView.jsx[22m
+[2m7:51:19 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx, /src/index.css[22m
+[2m7:51:30 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx, /src/index.css[22m
+[2m7:51:43 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/Sidebar.jsx, /src/index.css[22m
+[2m7:52:01 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/Sidebar.jsx, /src/index.css[22m
+[2m7:52:14 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/Sidebar.jsx, /src/index.css[22m
+[2m7:52:33 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/OlaView.jsx, /src/index.css[22m
+[2m7:52:44 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/OlaView.jsx, /src/index.css[22m
+[2m7:56:05 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx, /src/index.css[22m
+[2m7:56:05 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/Sidebar.jsx, /src/index.css[22m
+[2m7:56:05 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/views/OzView.jsx, /src/views/RexView.jsx[22m
+[2m7:56:05 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/OlaView.jsx, /src/index.css[22m
+[2m7:56:05 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/views/MemoView.jsx[22m
+[2m7:56:05 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/MemoView.jsx, /src/index.css[22m
+[2m7:56:05 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx, /src/index.css[22m
+[2m7:56:05 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/Sidebar.jsx, /src/index.css[22m
+[2m7:56:05 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/index.css, /src/views/OzView.jsx, /src/views/RexView.jsx[22m
+[2m7:56:05 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/OlaView.jsx, /src/index.css[22m
+[2m7:56:05 pm[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/lib/memo.js[22m
+[2m7:56:05 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/views/MemoView.jsx[22m
+[2m11:58:17 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx, /src/index.css[22m
+[2m11:58:17 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx, /src/index.css[22m
+[2m11:58:37 pm[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/Sidebar.jsx, /src/index.css[22m
+[2m12:05:47 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Landing.jsx, /src/index.css[22m
+[2m12:05:47 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/Sidebar.jsx, /src/index.css[22m
+[2m12:05:47 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx, /src/index.css[22m
+[2m12:05:47 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/Sidebar.jsx, /src/index.css[22m
+[2m12:05:49 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.jsx, /src/index.css[22m
+[2m12:05:49 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/Sidebar.jsx, /src/index.css[22m
+[2m12:05:49 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Landing.jsx[22m
+[2m12:18:22 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Landing.jsx, /src/index.css[22m
+[2m12:18:36 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Landing.jsx, /src/index.css[22m
+[2m12:18:51 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Landing.jsx, /src/index.css[22m
+[2m12:19:08 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Landing.jsx, /src/index.css[22m
+[2m12:19:24 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Landing.jsx, /src/index.css[22m
+[2m12:19:39 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Landing.jsx, /src/index.css[22m
+[2m12:19:53 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Landing.jsx, /src/index.css[22m
+[2m12:20:06 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Landing.jsx, /src/index.css[22m
+[2m12:20:26 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Landing.jsx, /src/index.css[22m
+[2m12:20:48 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Landing.jsx, /src/index.css[22m
+[2m12:21:38 am[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/Landing.jsx, /src/index.css[22m
