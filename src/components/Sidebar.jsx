@@ -17,19 +17,18 @@ const AGENTS = [
 const WORKSPACE = [
   { path: '/pipeline',  icon: BarChart2,    label: 'Pipeline'  },
   { path: '/outreach',  icon: Send,         label: 'Outreach'  },
-  { path: '/memo',      icon: ClipboardList, label: 'Memo'     },
-  { path: '/proposals', icon: FileText,     label: 'Proposals' },
   { path: '/prospects', icon: Search,       label: 'Prospects' },
   { path: '/nurture',   icon: Bell,         label: 'Nurture'   },
   { path: '/trends',    icon: TrendingUp,   label: 'Trends'    },
+  { path: '/memo',      icon: ClipboardList, label: 'Meetings' },
+  { path: '/proposals', icon: FileText,     label: 'Proposals' },
   { path: '/content',   icon: FileText,     label: 'Content'   },
-  { path: '/finance',   icon: TrendingUp,   label: 'Finance'   },
-  { path: '/okrs',      icon: Target,       label: 'OKRs'      },
 ]
 
 const SYSTEM = [
-  { path: '/automations', icon: Zap,          label: 'Automations' },
+  { path: '/okrs',        icon: Target,       label: 'OKRs'        },
   { path: '/cleanup',     icon: ShieldCheck,  label: 'CRM Quality' },
+  { path: '/automations', icon: Zap,          label: 'Automations' },
   { path: '/errors',      icon: AlertTriangle, label: 'Errors'      },
   { path: '/settings',    icon: Settings,      label: 'Settings'    },
 ]
