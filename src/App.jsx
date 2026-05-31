@@ -15,6 +15,7 @@ import PropView from './views/PropView'
 import PipView from './views/PipView'
 import NaraView from './views/NaraView'
 import AriaView from './views/AriaView'
+import CleoView from './views/CleoView'
 import ErrorsView from './views/ErrorsView'
 import StubView from './views/StubView'
 
@@ -38,6 +39,7 @@ function AppRoutes() {
         <Route path="/prospects"   element={<PipView />} />
         <Route path="/nurture"     element={<NaraView />} />
         <Route path="/trends"      element={<AriaView />} />
+        <Route path="/cleanup"     element={<CleoView />} />
         <Route path="/automations" element={<StubView title="Automations" />} />
         <Route path="/errors"      element={<ErrorsView />} />
         <Route path="/settings"    element={<StubView title="Settings" />} />

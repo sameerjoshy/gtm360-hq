@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Mic, Briefcase, Megaphone,
   DollarSign, Settings2, BarChart2, FileText,
   TrendingUp, Target, Zap, AlertTriangle, Settings,
-  Circle, Send, ClipboardList, Search, Bell,
+  Circle, Send, ClipboardList, Search, Bell, ShieldCheck,
 } from 'lucide-react'
 
 const AGENTS = [
@@ -29,6 +29,7 @@ const WORKSPACE = [
 
 const SYSTEM = [
   { path: '/automations', icon: Zap,          label: 'Automations' },
+  { path: '/cleanup',     icon: ShieldCheck,  label: 'CRM Quality' },
   { path: '/errors',      icon: AlertTriangle, label: 'Errors'      },
   { path: '/settings',    icon: Settings,      label: 'Settings'    },
 ]

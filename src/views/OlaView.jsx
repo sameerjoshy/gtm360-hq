@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAppStore } from '../store'
 import { countMeetingsThisWeek } from '../lib/memo'
+import { fetchCrmHealthSummary, healthScore, scoreColor } from '../lib/cleo'
 import { Settings2, Send, Loader2, Circle, Zap, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react'
 
 // ─── Ola system prompt ─────────────────────────────────────────────────────────
@@ -179,6 +181,8 @@ export default function OlaView() {
   const [trendReport, setTrendReport] = useState(null)
   const [outreachStats, setOutreachStats] = useState(null)
   const [memoCount, setMemoCount]   = useState(null)
+  const [crmHealth, setCrmHealth]   = useState(null)
+  const navigate = useNavigate()
   const chatEndRef                  = useRef(null)
   const deals                       = useAppStore(s => s.deals)
   const lastRefresh                 = useAppStore(s => s.lastRefresh)
@@ -222,6 +226,7 @@ export default function OlaView() {
 
   useEffect(() => {
     countMeetingsThisWeek().then(setMemoCount)
+    fetchCrmHealthSummary().then(setCrmHealth)
   }, [])
 
   useEffect(() => {
@@ -413,6 +418,42 @@ export default function OlaView() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Cleo — CRM Health */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xxs font-mono text-text-mut uppercase tracking-widest">Cleo — CRM Health</div>
+              <button
+                onClick={() => navigate('/cleanup')}
+                className="text-xxs font-mono text-gtm-orange hover:text-gtm-orange/80 transition-colors"
+              >
+                View Full Report →
+              </button>
+            </div>
+            {crmHealth ? (
+              <div className="card px-3 py-2.5 flex items-center gap-4">
+                <div className={`font-display text-2xl leading-none ${scoreColor(crmHealth.score)}`}>
+                  {crmHealth.score}%
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs text-text-sec">
+                    {crmHealth.issuesFound === 0
+                      ? 'All records clean'
+                      : `${crmHealth.issuesFound} issues found`}
+                  </div>
+                  {crmHealth.criticalCount > 0 && (
+                    <div className="text-xxs font-mono text-danger mt-0.5">
+                      {crmHealth.criticalCount} critical
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-xs text-text-mut font-mono">
+                No scan yet — click Run Manual Scan in CRM Quality
+              </div>
+            )}
           </div>
 
           {/* Oz Outreach Monitor */}
