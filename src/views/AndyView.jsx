@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { callAI } from '../lib/ai'
 import { supabase } from '../lib/supabase'
 import {
   Megaphone, Plus, CheckCircle, RotateCcw, Send,
@@ -44,119 +45,42 @@ function useAndyChat() {
     done: true,
   }])
   const [isStreaming, setStreaming] = useState(false)
-  const abortRef = useRef(null)
 
-  const send = useCallback(async (userText, selected) => {
-    const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
-    const hasKey = apiKey && apiKey !== 'your-anthropic-api-key-here'
-
-    // Add user message
-    setMessages(prev => [...prev, { role: 'user', content: userText, done: true }])
-
-    if (!hasKey) {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'Add VITE_ANTHROPIC_API_KEY to .env.local to enable Andy.',
-        done: true,
-        isError: true,
-      }])
-      return
-    }
-
+  const send = useCallback(async (userText) => {
     if (isStreaming) return
+
+    const history = messages
+      .filter(m => m.content && !m.isError)
+      .map(m => `${m.role === 'user' ? 'User' : 'Andy'}: ${m.content}`)
+      .join('\n')
+    const fullPrompt = (history ? history + '\nUser: ' : '') + userText
+
+    setMessages(prev => [
+      ...prev,
+      { role: 'user', content: userText, done: true },
+      { role: 'assistant', content: '', done: false },
+    ])
     setStreaming(true)
 
-    // Seed assistant bubble (will stream into it)
-    setMessages(prev => [...prev, { role: 'assistant', content: '', done: false }])
-
-    const controller = new AbortController()
-    abortRef.current = controller
-
-    // Build messages array for Claude (exclude the seeded empty assistant bubble)
-    const history = [...messages, { role: 'user', content: userText, done: true }]
-      .filter(m => m.content)
-      .map(({ role, content }) => ({ role, content }))
-
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        signal: controller.signal,
-        headers: {
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'claude-opus-4-7',
-          max_tokens: 1500,
-          stream: true,
-          thinking: { type: 'adaptive' },
-          system: ANDY_SYSTEM,
-          messages: history,
-        }),
-      })
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}))
-        throw new Error(body?.error?.message || `HTTP ${res.status}`)
-      }
-
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let buf = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        buf += decoder.decode(value, { stream: true })
-        const lines = buf.split('\n')
-        buf = lines.pop()
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue
-          const json = line.slice(6).trim()
-          if (json === '[DONE]') continue
-          try {
-            const evt = JSON.parse(json)
-            if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
-              setMessages(prev => {
-                const copy = [...prev]
-                copy[copy.length - 1] = {
-                  ...copy[copy.length - 1],
-                  content: copy[copy.length - 1].content + evt.delta.text,
-                }
-                return copy
-              })
-            }
-          } catch { /* skip */ }
-        }
-      }
-      // Mark done
+      const response = await callAI(fullPrompt, ANDY_SYSTEM, 1500)
       setMessages(prev => {
         const copy = [...prev]
-        copy[copy.length - 1] = { ...copy[copy.length - 1], done: true }
+        copy[copy.length - 1] = { ...copy[copy.length - 1], content: response, done: true }
         return copy
       })
     } catch (err) {
-      if (err.name !== 'AbortError') {
-        setMessages(prev => {
-          const copy = [...prev]
-          copy[copy.length - 1] = {
-            ...copy[copy.length - 1],
-            content: `Error: ${err.message}`,
-            done: true,
-            isError: true,
-          }
-          return copy
-        })
-      }
+      setMessages(prev => {
+        const copy = [...prev]
+        copy[copy.length - 1] = { ...copy[copy.length - 1], content: `Error: ${err.message}`, done: true, isError: true }
+        return copy
+      })
     } finally {
       setStreaming(false)
-      abortRef.current = null
     }
   }, [isStreaming, messages])
 
-  const stop = useCallback(() => abortRef.current?.abort(), [])
+  const stop = useCallback(() => setStreaming(false), [])
 
   return { messages, isStreaming, send, stop }
 }

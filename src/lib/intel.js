@@ -12,8 +12,7 @@
 
 import { getCompanyName, fmt$, supabase } from './supabase'
 import { apolloSearchPeople } from './apollo'
-
-const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
+import { callAI } from './ai'
 
 // ─── Prompt builders ──────────────────────────────────────────────────────────
 
@@ -130,9 +129,6 @@ function makeStepManager(onStep) {
  * @returns {Object} intel package (JSON from Claude)
  */
 export async function generateIntel(deal, onStep, signal) {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
-  if (!apiKey) throw new Error('VITE_ANTHROPIC_API_KEY not configured')
-
   const { add, update } = makeStepManager(onStep)
 
   // ── Layer 2: Apollo people search ─────────────────────────────────────────
@@ -147,31 +143,13 @@ export async function generateIntel(deal, onStep, signal) {
     update(apolloStep, 'warn', `Apollo unavailable — ${e.message}`)
   }
 
-  // ── Layers 1 + 3 + 4: Claude web research + synthesis ────────────────────
+  // ── Layers 1 + 3 + 4: AI research + synthesis via proxy ─────────────────
   const webStep   = add('Researching company signals…')
   const synthStep = add('Building intelligence package…', 'pending')
 
-  let res
+  let rawText
   try {
-    res = await fetch(ANTHROPIC_URL, {
-      method: 'POST',
-      signal,
-      headers: {
-        'x-api-key':                                apiKey,
-        'anthropic-version':                        '2023-06-01',
-        'anthropic-beta':                           'web-search-2025-03-05',
-        'anthropic-dangerous-direct-browser-access': 'true',
-        'content-type':                             'application/json',
-      },
-      body: JSON.stringify({
-        model:    'claude-opus-4-7',
-        max_tokens: 4096,
-        thinking: { type: 'adaptive' },
-        system:   INTEL_SYSTEM,
-        tools:    [{ type: 'web_search_20250305', name: 'web_search', max_uses: 6 }],
-        messages: [{ role: 'user', content: buildIntelPrompt(deal, people) }],
-      }),
-    })
+    rawText = await callAI(buildIntelPrompt(deal, people), INTEL_SYSTEM, 4096)
   } catch (e) {
     update(webStep, 'error')
     update(synthStep, 'error')
@@ -181,23 +159,8 @@ export async function generateIntel(deal, onStep, signal) {
   update(webStep, 'done', 'Company signals researched')
   update(synthStep, 'running')
 
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    update(synthStep, 'error')
-    throw new Error(body?.error?.message || `Claude API returned ${res.status}`)
-  }
-
-  const data = await res.json()
-
-  // Find last text block — that's the final synthesis (web_search tool results come first)
-  const textBlock = [...(data.content || [])].reverse().find(b => b.type === 'text')
-  if (!textBlock?.text) {
-    update(synthStep, 'error')
-    throw new Error('No text in Claude response')
-  }
-
-  // Strip markdown fences if Claude wrapped the JSON anyway
-  const raw = textBlock.text
+  // Strip markdown fences if model wrapped the JSON
+  const raw = rawText
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/\s*```$/, '')
     .trim()
