@@ -280,11 +280,18 @@ export default function NaraView() {
                 <div className="text-xs text-text-mut mt-2 leading-relaxed max-w-xs">
                   Engagement signals from your pipeline prospects will appear here automatically.
                 </div>
-                <div className="mt-3 px-3 py-2 bg-warn-light border border-warn/20 rounded-lg inline-block text-left">
-                  <div className="text-xxs font-mono text-warn font-medium mb-0.5">Setup required</div>
-                  <div className="text-xxs text-warn/80 font-mono">
-                    Run <code className="bg-warn/10 px-1 rounded">--setup-oauth</code> to connect Gmail
+                <div className="mt-4 w-72 bg-bg-s1 border border-bdr rounded-xl p-5 text-left">
+                  <div className="text-sm font-semibold text-text-pri mb-1">Connect Gmail to activate Nara</div>
+                  <div className="text-xs text-text-mut leading-relaxed mb-4">
+                    Nara monitors your inbox for replies from pipeline prospects.
                   </div>
+                  <button
+                    onClick={() => alert('Run: python gtm360_gemini_agents.py --setup-oauth')}
+                    className="w-full py-2 rounded-lg text-xs font-semibold text-white"
+                    style={{ background: '#FF4D00' }}
+                  >
+                    Connect Gmail
+                  </button>
                 </div>
               </div>
             </div>

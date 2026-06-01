@@ -300,18 +300,27 @@ export default function SamView() {
               )}
 
               {/* Pipeline quick view */}
-              {deals.length > 0 && (
-                <BriefSection icon={TrendingUp} label="Pipeline">
-                  <div className="space-y-1">
-                    {deals.slice(0, 5).map((d, i) => (
-                      <div key={i} className="flex items-center justify-between text-xxs font-mono">
-                        <span className="text-text-sec">{getCompanyName(d)}</span>
-                        <span className="text-text-mut">{fmt$(d.amount)}</span>
+              <BriefSection icon={TrendingUp} label="Pipeline">
+                {deals.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {deals.slice(0, 3).map((d, i) => (
+                      <div key={i} className="flex items-center justify-between text-xxs font-mono py-0.5">
+                        <span className="text-text-sec truncate max-w-[60%]">{getCompanyName(d)}</span>
+                        <span className="text-gtm-orange font-medium">{fmt$(d.amount)}</span>
                       </div>
                     ))}
+                    {deals.length > 3 && (
+                      <div className="text-xxs text-text-mut font-mono pt-0.5">
+                        +{deals.length - 3} more deals
+                      </div>
+                    )}
                   </div>
-                </BriefSection>
-              )}
+                ) : (
+                  <div className="text-xxs text-text-mut font-mono">
+                    No live deals — run python gtm360_agents.py rex to sync
+                  </div>
+                )}
+              </BriefSection>
             </>
           ) : (
             <div className="space-y-3">
