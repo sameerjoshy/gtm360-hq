@@ -34,6 +34,50 @@ export default {
 
     const url = new URL(request.url);
 
+    // ── /apollo — Apollo people search ───────────────────────────────────────
+    if (url.pathname === '/apollo') {
+      const { domain, titles } = await request.json();
+      if (!domain) {
+        return new Response(JSON.stringify({ error: 'No domain provided' }), {
+          status: 400, headers: { 'Content-Type': 'application/json', ...CORS },
+        });
+      }
+      try {
+        const res = await fetch('https://api.apollo.io/v1/mixed_people/search', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache',
+            'X-Api-Key': env.APOLLO_API_KEY,
+          },
+          body: JSON.stringify({
+            organization_domains: [domain],
+            person_titles: titles || ['CEO','Founder','Co-Founder','CRO','VP Sales','CFO','COO','President'],
+            page: 1,
+            per_page: 10,
+          }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body?.message || `Apollo returned ${res.status}`);
+        }
+        const data = await res.json();
+        const people = (data.people || []).map(p => ({
+          name:         `${p.first_name || ''} ${p.last_name || ''}`.trim(),
+          title:        p.title        || '',
+          linkedin_url: p.linkedin_url || null,
+          email:        p.email        || null,
+        }));
+        return new Response(JSON.stringify({ people }), {
+          headers: { 'Content-Type': 'application/json', ...CORS },
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500, headers: { 'Content-Type': 'application/json', ...CORS },
+        });
+      }
+    }
+
     // ── /search — Serper web search ──────────────────────────────────────────
     if (url.pathname === '/search') {
       const { query, num = 5 } = await request.json();

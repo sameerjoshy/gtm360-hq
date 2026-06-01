@@ -1,5 +1,19 @@
 const AI_PROXY = 'https://gtm360-ai-proxy.sameerjoshy.workers.dev';
 
+export async function apolloSearchPeople(domain, signal) {
+  if (!domain) throw new Error('No company domain provided')
+  const response = await fetch(`${AI_PROXY}/apollo`, {
+    method: 'POST',
+    signal,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ domain })
+  });
+  if (!response.ok) throw new Error(`Apollo proxy returned ${response.status}`);
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  return data.people || [];
+}
+
 export async function searchWeb(query, num = 5) {
   const response = await fetch(`${AI_PROXY}/search`, {
     method: 'POST',

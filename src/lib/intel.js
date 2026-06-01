@@ -11,8 +11,7 @@
  */
 
 import { getCompanyName, fmt$, supabase } from './supabase'
-import { apolloSearchPeople } from './apollo'
-import { callAI, searchWeb } from './ai'
+import { callAI, searchWeb, apolloSearchPeople } from './ai'
 
 // ─── Prompt builders ──────────────────────────────────────────────────────────
 
