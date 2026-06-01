@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { callAI } from '../lib/ai'
 import { supabase, fmt$ } from '../lib/supabase'
 import { useAppStore } from '../store'

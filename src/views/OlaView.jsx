@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { callAI } from '../lib/ai'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
