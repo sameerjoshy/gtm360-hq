@@ -139,7 +139,8 @@ export async function generateIntel(deal, onStep, signal) {
       `Found ${people.length} stakeholder${people.length !== 1 ? 's' : ''} via Apollo`)
   } catch (e) {
     if (e.name === 'AbortError') throw e
-    update(apolloStep, 'warn', `Apollo unavailable — ${e.message}`)
+    // Apollo free plan doesn't support people search — skip silently
+    update(apolloStep, 'warn', 'Stakeholder lookup skipped — continuing with web research')
   }
 
   // ── Layer 3: Serper web search ────────────────────────────────────────────

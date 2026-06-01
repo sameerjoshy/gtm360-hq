@@ -51,6 +51,7 @@ export default {
             'X-Api-Key': env.APOLLO_API_KEY,
           },
           body: JSON.stringify({
+            api_key: env.APOLLO_API_KEY,
             organization_domains: [domain],
             person_titles: titles || ['CEO','Founder','Co-Founder','CRO','VP Sales','CFO','COO','President'],
             page: 1,
