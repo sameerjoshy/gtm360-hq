@@ -250,8 +250,8 @@ function AgentNode({ agent, selected, onClick }) {
           boxShadow: selected
             ? `0 0 30px 6px ${glowColor}, inset 0 1px 0 rgba(255,255,255,0.1)`
             : `0 0 16px 0 ${glowColor}, inset 0 1px 0 rgba(255,255,255,0.06)`,
-          padding: human ? '12px 22px' : isExec ? '8px 14px' : '10px 18px',
-          minWidth: human ? 170 : isExec ? 108 : 138,
+          padding: human ? '12px 22px' : isExec ? '10px 16px' : '10px 20px',
+          minWidth: human ? 180 : isExec ? 124 : 148,
           textAlign: 'center',
         }}
       >
@@ -269,7 +269,7 @@ function AgentNode({ agent, selected, onClick }) {
         {/* name */}
         <div style={{
           fontFamily:'"Bebas Neue",sans-serif',
-          fontSize: human ? 17 : isExec ? 13 : 15,
+          fontSize: human ? 17 : isExec ? 14 : 15,
           color:'#FFFFFF', letterSpacing:'1.5px', lineHeight:1,
         }}>
           {agent.name}
@@ -693,7 +693,7 @@ export default function Landing() {
       </section>
 
       {/* ── Section 2: Org Chart ───────────────────────────────────────────── */}
-      <section id="org" style={{ background:'#06050C', padding:'80px 0 60px', position:'relative' }}>
+      <section id="org" style={{ background:'#06050C', padding:'80px 0 60px', position:'relative', minHeight:'100vh' }}>
         {/* Section header */}
         <Reveal style={{ textAlign:'center', marginBottom:56, padding:'0 32px' }}>
           <div style={{ fontFamily:'"DM Mono",monospace', fontSize:10, letterSpacing:'3px',
@@ -711,9 +711,9 @@ export default function Landing() {
         </Reveal>
 
         {/* Org chart container */}
-        <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch', paddingBottom:24 }}>
+        <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch', padding:'0 40px 24px' }}>
           <div style={{
-            position:'relative', minWidth:1200, height:920,
+            position:'relative', minWidth:1400, height:980,
             margin:'0 auto', maxWidth:1600,
           }}>
             <OrgLines selected={selectedAgent?.id} />

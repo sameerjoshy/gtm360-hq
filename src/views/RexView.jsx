@@ -586,8 +586,10 @@ export default function RexView() {
     supabase
       .from('pipeline_snapshot')
       .select('*')
+      .eq('gtm360_record_type', 'Live')
       .order('amount', { ascending: false })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error('[Rex] pipeline_snapshot error:', error)
         const rows = data || []
         setDeals(rows)
         setSelected(rows[0] || null)

@@ -113,15 +113,12 @@ export default function Sidebar() {
            style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', minHeight: 48 }}>
         {!sidebarCollapsed && (
           <div className="flex items-center gap-2 overflow-hidden">
-            <img
-              src="/gtm360-logo.png"
-              alt="GTM360"
-              className="h-6 w-auto object-contain brightness-0 invert opacity-90"
-              onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }}
-            />
-            <div className="hidden items-center">
-              <span className="font-display text-white text-sm tracking-widest">GTM360</span>
-            </div>
+            <span
+              className="font-display tracking-widest whitespace-nowrap"
+              style={{ fontSize: 16, color: '#fff', letterSpacing: '3px' }}
+            >
+              GTM<span style={{ color: '#FF4D00' }}>360</span> HQ
+            </span>
           </div>
         )}
         <button

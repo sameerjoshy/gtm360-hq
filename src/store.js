@@ -24,6 +24,7 @@ export const useAppStore = create((set) => ({
       supabase
         .from('pipeline_snapshot')
         .select('*')
+        .eq('gtm360_record_type', 'Live')
         .order('amount', { ascending: false }),
 
       supabase
