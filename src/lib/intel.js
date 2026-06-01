@@ -11,7 +11,7 @@
  */
 
 import { getCompanyName, fmt$, supabase } from './supabase'
-import { callAI, searchWeb, apolloSearchPeople } from './ai'
+import { callAI, searchWeb } from './ai'
 
 // ─── Prompt builders ──────────────────────────────────────────────────────────
 
@@ -130,39 +130,33 @@ function makeStepManager(onStep) {
 export async function generateIntel(deal, onStep, signal) {
   const { add, update } = makeStepManager(onStep)
 
-  // ── Layer 2: Apollo people search ─────────────────────────────────────────
-  const apolloStep = add('Finding stakeholders via Apollo…')
-  let people = []
-  try {
-    people = await apolloSearchPeople(deal.company_domain || '', signal)
-    update(apolloStep, 'done',
-      `Found ${people.length} stakeholder${people.length !== 1 ? 's' : ''} via Apollo`)
-  } catch (e) {
-    if (e.name === 'AbortError') throw e
-    // Apollo free plan doesn't support people search — skip silently
-    update(apolloStep, 'warn', 'Stakeholder lookup skipped — continuing with web research')
-  }
-
-  // ── Layer 3: Serper web search ────────────────────────────────────────────
-  const webStep   = add('Researching company signals…')
-  const synthStep = add('Building intelligence package…', 'pending')
+  // ── Layer 2 + 3: Serper — company signals + stakeholder search (parallel) ──
+  const webStep    = add('Researching company signals…')
+  const peopleStep = add('Finding stakeholders via web…')
+  const synthStep  = add('Building intelligence package…', 'pending')
 
   const co = getCompanyName(deal)
-  let webSignals = []
-  try {
-    const results = await searchWeb(`${co} company GTM revenue growth 2024 2025`, 6)
-    webSignals = results
-    update(webStep, 'done', `Found ${results.length} web signals`)
-  } catch (e) {
-    update(webStep, 'warn', 'Web search unavailable — using deal data only')
-  }
+  let webSignals = [], peopleSignals = []
 
-  // ── Layers 1 + 4: AI synthesis ────────────────────────────────────────────
+  await Promise.allSettled([
+    searchWeb(`${co} company GTM revenue growth funding 2024 2025`, 6).then(r => {
+      webSignals = r
+      update(webStep, 'done', `Found ${r.length} company signals`)
+    }).catch(() => update(webStep, 'warn', 'Web search unavailable')),
+
+    searchWeb(`${co} CEO founder CRO "head of" LinkedIn site:linkedin.com`, 5).then(r => {
+      peopleSignals = r
+      update(peopleStep, 'done', `Found ${r.length} stakeholder signals`)
+    }).catch(() => update(peopleStep, 'warn', 'Stakeholder search unavailable')),
+  ])
+
+  // ── Layer 4: AI synthesis ─────────────────────────────────────────────────
   update(synthStep, 'running')
 
-  const webContext = webSignals.length > 0
-    ? '\n\nWEB SIGNALS:\n' + webSignals.map(r => `- ${r.title}: ${r.snippet} (${r.link})`).join('\n')
-    : ''
+  const webContext = [
+    webSignals.length   > 0 ? '\n\nCOMPANY SIGNALS:\n'   + webSignals.map(r   => `- ${r.title}: ${r.snippet}`).join('\n') : '',
+    peopleSignals.length > 0 ? '\n\nSTAKEHOLDER SIGNALS:\n' + peopleSignals.map(r => `- ${r.title}: ${r.snippet}`).join('\n') : '',
+  ].join('')
 
   let rawText
   try {
