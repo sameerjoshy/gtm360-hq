@@ -1,5 +1,16 @@
 const AI_PROXY = 'https://gtm360-ai-proxy.sameerjoshy.workers.dev';
 
+export async function searchWeb(query, num = 5) {
+  const response = await fetch(`${AI_PROXY}/search`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query, num })
+  });
+  if (!response.ok) throw new Error(`Search proxy returned ${response.status}`);
+  const data = await response.json();
+  return data.results || [];
+}
+
 export async function callAI(prompt, system = '', max_tokens = 800) {
   const response = await fetch(AI_PROXY, {
     method: 'POST',

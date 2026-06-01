@@ -12,7 +12,7 @@
 
 import { getCompanyName, fmt$, supabase } from './supabase'
 import { apolloSearchPeople } from './apollo'
-import { callAI } from './ai'
+import { callAI, searchWeb } from './ai'
 
 // ─── Prompt builders ──────────────────────────────────────────────────────────
 
@@ -143,15 +143,31 @@ export async function generateIntel(deal, onStep, signal) {
     update(apolloStep, 'warn', `Apollo unavailable — ${e.message}`)
   }
 
-  // ── Layers 1 + 3 + 4: AI research + synthesis via proxy ─────────────────
+  // ── Layer 3: Serper web search ────────────────────────────────────────────
   const webStep   = add('Researching company signals…')
   const synthStep = add('Building intelligence package…', 'pending')
 
+  const co = getCompanyName(deal)
+  let webSignals = []
+  try {
+    const results = await searchWeb(`${co} company GTM revenue growth 2024 2025`, 6)
+    webSignals = results
+    update(webStep, 'done', `Found ${results.length} web signals`)
+  } catch (e) {
+    update(webStep, 'warn', 'Web search unavailable — using deal data only')
+  }
+
+  // ── Layers 1 + 4: AI synthesis ────────────────────────────────────────────
+  update(synthStep, 'running')
+
+  const webContext = webSignals.length > 0
+    ? '\n\nWEB SIGNALS:\n' + webSignals.map(r => `- ${r.title}: ${r.snippet} (${r.link})`).join('\n')
+    : ''
+
   let rawText
   try {
-    rawText = await callAI(buildIntelPrompt(deal, people), INTEL_SYSTEM, 4096)
+    rawText = await callAI(buildIntelPrompt(deal, people) + webContext, INTEL_SYSTEM, 4096)
   } catch (e) {
-    update(webStep, 'error')
     update(synthStep, 'error')
     throw e
   }
