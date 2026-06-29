@@ -8,7 +8,7 @@ async function searchWeb(query, env, num = 5) {
   const res = await fetch('https://google.serper.dev/search', {
     method: 'POST',
     headers: {
-      'X-API-KEY': env.SERPER_API_KEY,
+      'X-API-KEY': '0d2dd80fc07e77c0ea7e1f51f0ff0a56b215bcf7',
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ q: query, num }),

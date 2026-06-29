@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Demo from './pages/Demo';
 import Layout from './components/Layout'
 import ErrorBoundary from './components/ErrorBoundary'
 import { UIProvider } from './context/UIContext'
@@ -58,6 +59,7 @@ export default function App() {
           <ErrorBoundary>
             <Routes>
               <Route path="/" element={<Landing />} />
+              <Route path="/demo" element={<Demo />} />
               <Route path="/*" element={<AppRoutes />} />
             </Routes>
           </ErrorBoundary>

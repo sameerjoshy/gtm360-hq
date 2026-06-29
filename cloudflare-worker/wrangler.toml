@@ -4,3 +4,5 @@ compatibility_date = "2024-01-01"
 
 [ai]
 binding = "AI"
+[env.production]
+vars = { SERPER_API_KEY = "0d2dd80fc07e77c0ea7e1f51f0ff0a56b215bcf7" }
