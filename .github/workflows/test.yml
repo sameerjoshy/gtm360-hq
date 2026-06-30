@@ -3,58 +3,29 @@ name: Tests
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 jobs:
   backend-tests:
-    name: Backend Tests
     runs-on: ubuntu-latest
-    
     steps:
       - uses: actions/checkout@v3
-      
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-      
-      - name: Install backend dependencies
-        run: |
+      - run: |
           cd backend
           pip install -r requirements.txt
-          pip install pytest pytest-cov
-      
-      - name: Run backend tests
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          ENVIRONMENT: test
-        run: |
-          cd backend
+          pip install pytest
           pytest tests/ -v
 
   frontend-tests:
-    name: Frontend Tests
     runs-on: ubuntu-latest
-    
     steps:
       - uses: actions/checkout@v3
-      
-      - name: Set up Node
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: '18'
-          cache: 'npm'
-         
-      
-      - name: Install frontend dependencies
-        run: |
+      - run: |
           cd frontend
           npm install
-      
-      - name: Build frontend
-        run: |
-          cd frontend
           npm run build
