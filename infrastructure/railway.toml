@@ -1,0 +1,11 @@
+[build]
+builder = "dockerfile"
+
+[deploy]
+startCommand = "gunicorn --bind 0.0.0.0:5000 app:create_app()"
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+
+[environments.production]
+name = "GTM360 HQ Production"
+icon = "🚀"
