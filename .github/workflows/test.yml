@@ -1,4 +1,11 @@
-﻿  backend-tests:
+﻿name: Tests
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  backend-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -10,3 +17,15 @@
           pip install -r ../requirements.txt
           pip install pytest
           pytest tests/ -v
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: |
+          cd frontend
+          npm install
+          npm run build
