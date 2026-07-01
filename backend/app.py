@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 
 from api.agents import agents_bp
+from api.escalations_api import escalations_bp
 from scheduler import start_scheduler
 from config import Config
 from api import routes
@@ -16,8 +17,10 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     CORS(app, resources={r"/api/*": {"origins": "*"}})
+    
     app.register_blueprint(routes.api_bp, url_prefix="/api")
     app.register_blueprint(agents_bp)
+    app.register_blueprint(escalations_bp, url_prefix="/api/escalations")
     
     @app.before_request
     def startup():

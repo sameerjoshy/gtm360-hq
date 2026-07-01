@@ -1,6 +1,7 @@
 ﻿from agents.base_agent import BaseAgent
 from utils.hubspot_client import HubSpotClient
 from typing import List, Dict, Any, Optional
+import requests
 
 class LeadQualificationAgent(BaseAgent):
     def __init__(self):
@@ -24,6 +25,17 @@ class LeadQualificationAgent(BaseAgent):
         }
     
     def save_result(self, contact: Dict[str, Any], result: Dict[str, Any]) -> bool:
+        if result["hot_flag"]:
+            try:
+                requests.post("http://localhost:5000/api/escalations/create", json={
+                    "agent_name": "lead_qualification",
+                    "escalation_type": "hot_lead",
+                    "severity": "high",
+                    "entity_id": result["lead_id"],
+                    "data": result
+                })
+            except Exception as e:
+                self.logger.error(f"Escalation failed: {e}")
         return True
     
     def _score_lead(self, contact):
