@@ -1,4 +1,4 @@
-"""
+﻿"""
 GTM360 HQ — Backend Flask Application
 Week 1: Foundation Scaffold
 """
@@ -7,8 +7,8 @@ from flask_cors import CORS
 import os
 from datetime import datetime
 
-from backend.api.agents import agents_bp
-from backend.scheduler import start_scheduler
+from api.agents import agents_bp
+from scheduler import start_scheduler
 from config import Config
 from api import routes
 from utils.logger import setup_logger
