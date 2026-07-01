@@ -1,6 +1,5 @@
-"""
-GTM360 HQ — Backend Flask Application
-Week 1: Foundation Scaffold
+ï»¿"""
+GTM360 HQ Backend Flask Application
 """
 from flask import Flask, jsonify
 from flask_cors import CORS
@@ -16,27 +15,18 @@ from utils.logger import setup_logger
 logger = setup_logger(__name__)
 
 def create_app():
-    """Application factory"""
     app = Flask(__name__)
-    
-    # Configuration
     app.config.from_object(Config)
-    
-    # CORS
     CORS(app, resources={r"/api/*": {"origins": "*"}})
-    
-    # Register blueprints
     app.register_blueprint(routes.api_bp, url_prefix="/api")
     app.register_blueprint(agents_bp)
     
-    # Scheduler startup
     @app.before_request
     def startup():
         if not hasattr(app, 'scheduler_started'):
             start_scheduler()
             app.scheduler_started = True
     
-    # Health check
     @app.route("/health", methods=["GET"])
     def health():
         return jsonify({
@@ -45,7 +35,6 @@ def create_app():
             "environment": os.getenv("ENVIRONMENT", "development")
         }), 200
     
-    # Error handlers
     @app.errorhandler(404)
     def not_found(e):
         return jsonify({"error": "Not found"}), 404
@@ -55,8 +44,7 @@ def create_app():
         logger.error(f"Server error: {e}")
         return jsonify({"error": "Internal server error"}), 500
     
-    logger.info(f"GTM360 HQ Backend initialized ({Config.ENVIRONMENT})")
-    
+    logger.info(f"GTM360 HQ Backend initialized")
     return app
 
 if __name__ == "__main__":
