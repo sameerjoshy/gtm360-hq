@@ -6,12 +6,14 @@ import requests
 class LeadQualificationAgent(BaseAgent):
     def __init__(self):
         super().__init__("lead_qualification", 1, "lead_qualifications")
-        self.hubspot = HubSpotClient()
+        self.hubspot = None
     
     def get_system_prompt(self) -> str:
         return "You are a lead scoring expert. Score leads 0-1 based on fit and engagement."
     
     def fetch_data(self) -> List[Dict[str, Any]]:
+        if not self.hubspot:
+            self.hubspot = HubSpotClient()
         return self.hubspot.get_contacts(limit=10)
     
     def process_item(self, contact: Dict[str, Any]) -> Optional[Dict[str, Any]]:
