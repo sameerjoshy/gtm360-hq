@@ -7,6 +7,16 @@ from webhooks.slack import SlackNotifier
 escalations_bp = Blueprint("escalations_api", __name__)
 slack = SlackNotifier()
 
+@escalations_bp.route("", methods=["GET"])
+def get_escalations():
+    """Fetch open escalations"""
+    try:
+        result = supabase_request("GET", "escalations?status=eq.open&order=created_at.desc&limit=50")
+        escalations = result if isinstance(result, list) else []
+        return jsonify({"escalations": escalations, "total": len(escalations)}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @escalations_bp.route("/create", methods=["POST"])
 def create_escalation():
     data = request.json
