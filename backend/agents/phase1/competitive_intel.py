@@ -8,8 +8,8 @@ import urllib.request
 import urllib.error
 from typing import Optional, Dict, List, Any
 from datetime import datetime
-from backend.agents.base_agent import BaseAgent
-from backend.utils.supabase_client import supabase_get, supabase_post
+from agents.base_agent import BaseAgent
+from utils.supabase_client import supabase_get, supabase_post
 
 SERPER_API_KEY = "0d2dd80fc07e77c0ea7e1f51f0ff0a56b215bcf7"
 

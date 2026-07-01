@@ -5,8 +5,8 @@ Deal Risk Agent - detects engagement gaps and flags at-risk deals
 
 from datetime import datetime, date
 from typing import Optional, Dict, List, Any
-from backend.agents.base_agent import BaseAgent
-from backend.utils.supabase_client import supabase_get, supabase_post
+from agents.base_agent import BaseAgent
+from utils.supabase_client import supabase_get, supabase_post
 
 
 class DealRiskAgent(BaseAgent):

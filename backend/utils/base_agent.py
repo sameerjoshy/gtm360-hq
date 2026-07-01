@@ -7,8 +7,8 @@ import json
 from datetime import datetime
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, List, Any
-from backend.utils.llm import call_groq_json
-from backend.utils.supabase_client import supabase_post
+from utils.llm import call_groq_json
+from utils.supabase_client import supabase_post
 
 
 class BaseAgent(ABC):

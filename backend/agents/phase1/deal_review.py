@@ -6,8 +6,8 @@ Deal Review Agent - assesses deal health via MEDDIC scoring
 import json
 from typing import Optional, Dict, List, Any
 from datetime import date
-from backend.agents.base_agent import BaseAgent
-from backend.utils.supabase_client import supabase_get, supabase_post
+from agents.base_agent import BaseAgent
+from utils.supabase_client import supabase_get, supabase_post
 
 
 class DealReviewAgent(BaseAgent):

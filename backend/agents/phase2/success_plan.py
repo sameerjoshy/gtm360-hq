@@ -6,8 +6,8 @@ Success Plan Agent - creates 90-day success plans for new customers
 import json
 from typing import Optional, Dict, List, Any
 from datetime import datetime, timedelta
-from backend.agents.base_agent import BaseAgent
-from backend.utils.supabase_client import supabase_post
+from agents.base_agent import BaseAgent
+from utils.supabase_client import supabase_post
 
 
 class SuccessPlanAgent(BaseAgent):

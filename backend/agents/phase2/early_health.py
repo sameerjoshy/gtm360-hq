@@ -4,8 +4,8 @@ Early Health Agent - monitors health of new customers during onboarding
 """
 
 from typing import Optional, Dict, List, Any
-from backend.agents.base_agent import BaseAgent
-from backend.utils.supabase_client import supabase_post
+from agents.base_agent import BaseAgent
+from utils.supabase_client import supabase_post
 
 
 class EarlyHealthAgent(BaseAgent):

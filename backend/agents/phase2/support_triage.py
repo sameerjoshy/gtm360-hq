@@ -5,8 +5,8 @@ Support Triage Agent - categorizes support tickets and escalates critical issues
 
 from typing import Optional, Dict, List, Any
 from datetime import datetime
-from backend.agents.base_agent import BaseAgent
-from backend.utils.supabase_client import supabase_post
+from agents.base_agent import BaseAgent
+from utils.supabase_client import supabase_post
 
 
 class SupportTriageAgent(BaseAgent):

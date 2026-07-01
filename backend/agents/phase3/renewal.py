@@ -5,8 +5,8 @@ Renewal Agent - manages contract renewals and identifies at-risk renewals
 
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List, Any
-from backend.agents.base_agent import BaseAgent
-from backend.utils.supabase_client import supabase_post
+from agents.base_agent import BaseAgent
+from utils.supabase_client import supabase_post
 
 
 class RenewalAgent(BaseAgent):

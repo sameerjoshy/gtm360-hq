@@ -1,19 +1,19 @@
-﻿from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional
 from datetime import datetime
-from backend.agents.phase1.lead_qualification import LeadQualificationAgent
-from backend.agents.phase1.deal_risk import DealRiskAgent
-from backend.agents.phase1.competitive_intel import CompetitiveIntelAgent
-from backend.agents.phase1.deal_review import DealReviewAgent
-from backend.agents.phase2.success_plan import SuccessPlanAgent
-from backend.agents.phase2.early_health import EarlyHealthAgent
-from backend.agents.phase2.support_triage import SupportTriageAgent
-from backend.agents.phase2.ae_cs_handover import AECSHandoverAgent
-from backend.agents.phase2.churn_risk import ChurnRiskAgent
-from backend.agents.phase2.ebr_prep import EBRPrepAgent
-from backend.agents.phase2.stakeholder_coverage import StakeholderCoverageAgent
-from backend.agents.phase3.upsell_signal import UpsellSignalAgent
-from backend.agents.phase3.renewal import RenewalAgent
-from backend.agents.phase3.advocacy import AdvocacyAgent
+from agents.phase1.lead_qualification import LeadQualificationAgent
+from agents.phase1.deal_risk import DealRiskAgent
+from agents.phase1.competitive_intel import CompetitiveIntelAgent
+from agents.phase1.deal_review import DealReviewAgent
+from agents.phase2.success_plan import SuccessPlanAgent
+from agents.phase2.early_health import EarlyHealthAgent
+from agents.phase2.support_triage import SupportTriageAgent
+from agents.phase2.ae_cs_handover import AECSHandoverAgent
+from agents.phase2.churn_risk import ChurnRiskAgent
+from agents.phase2.ebr_prep import EBRPrepAgent
+from agents.phase2.stakeholder_coverage import StakeholderCoverageAgent
+from agents.phase3.upsell_signal import UpsellSignalAgent
+from agents.phase3.renewal import RenewalAgent
+from agents.phase3.advocacy import AdvocacyAgent
 
 class Orchestrator:
     """Central orchestrator for all GTM360 agents"""

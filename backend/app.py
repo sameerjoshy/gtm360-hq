@@ -1,5 +1,5 @@
-﻿"""
-GTM360 HQ — Backend Flask Application
+"""
+GTM360 HQ � Backend Flask Application
 Week 1: Foundation Scaffold
 """
 from flask import Flask, jsonify

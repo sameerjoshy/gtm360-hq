@@ -12,8 +12,8 @@ Routes:
 
 from flask import Blueprint, request, jsonify
 from datetime import datetime
-from backend.agents.orchestrator import get_orchestrator
-from backend.utils.logger import log_info, log_error
+from agents.orchestrator import get_orchestrator
+from utils.logger import log_info, log_error
 
 agents_bp = Blueprint("agents", __name__, url_prefix="/api/agents")
 

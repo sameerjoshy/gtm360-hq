@@ -4,8 +4,8 @@ Upsell Signal Agent - identifies expansion opportunities in existing accounts
 """
 
 from typing import Optional, Dict, List, Any
-from backend.agents.base_agent import BaseAgent
-from backend.utils.supabase_client import supabase_post
+from agents.base_agent import BaseAgent
+from utils.supabase_client import supabase_post
 
 
 class UpsellSignalAgent(BaseAgent):
