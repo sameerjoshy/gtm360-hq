@@ -1,9 +1,15 @@
-﻿import json
+"""
+backend/agents/base_agent.py
+Base agent class - all agents inherit from this
+"""
+
+import json
 from datetime import datetime
 from abc import ABC, abstractmethod
 from typing import Optional, Dict, List, Any
 from backend.utils.llm import call_groq_json
 from backend.utils.supabase_client import supabase_post
+
 
 class BaseAgent(ABC):
     """Base class for all GTM360 agents"""
@@ -45,7 +51,7 @@ class BaseAgent(ABC):
         })
     
     def run(self) -> Dict[str, Any]:
-        """Execute agent"""
+        """Execute agent - fetch data, process, save results"""
         try:
             self.run_status = "running"
             print(f"[{self.name}] Starting...")
@@ -54,7 +60,12 @@ class BaseAgent(ABC):
             if not items:
                 print(f"[{self.name}] No data to process")
                 self.run_status = "completed"
-                return {"status": "success", "agent": self.name, "items_processed": 0, "errors": []}
+                return {
+                    "status": "success",
+                    "agent": self.name,
+                    "items_processed": 0,
+                    "errors": []
+                }
             
             processed_count = 0
             for item in items:
@@ -69,6 +80,7 @@ class BaseAgent(ABC):
                     print(f"[{self.name}] Error processing {item_id}: {e}")
             
             self.run_status = "completed"
+            
             print(f"[{self.name}] Completed: {processed_count}/{len(items)} processed")
             
             return {
@@ -90,7 +102,7 @@ class BaseAgent(ABC):
             }
     
     def call_llm(self, prompt: str, max_tokens: int = 800) -> Dict[str, Any]:
-        """Call LLM with this agent''s system prompt"""
+        """Call LLM with this agent's system prompt"""
         return call_groq_json(
             prompt=prompt,
             system=self.get_system_prompt(),

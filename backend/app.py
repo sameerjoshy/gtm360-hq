@@ -2,12 +2,13 @@
 GTM360 HQ — Backend Flask Application
 Week 1: Foundation Scaffold
 """
-
 from flask import Flask, jsonify
 from flask_cors import CORS
 import os
 from datetime import datetime
 
+from backend.api.agents import agents_bp
+from backend.scheduler import start_scheduler
 from config import Config
 from api import routes
 from utils.logger import setup_logger
@@ -26,6 +27,14 @@ def create_app():
     
     # Register blueprints
     app.register_blueprint(routes.api_bp, url_prefix="/api")
+    app.register_blueprint(agents_bp)
+    
+    # Scheduler startup
+    @app.before_request
+    def startup():
+        if not hasattr(app, 'scheduler_started'):
+            start_scheduler()
+            app.scheduler_started = True
     
     # Health check
     @app.route("/health", methods=["GET"])

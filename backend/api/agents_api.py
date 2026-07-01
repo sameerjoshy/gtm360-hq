@@ -1,8 +1,22 @@
-﻿from flask import Blueprint, request, jsonify
+"""
+backend/api/agents.py
+Agent management API endpoints
+Routes:
+  GET  /api/agents                    - list all agents
+  POST /api/agents/run                - run all agents
+  POST /api/agents/{name}/run         - run specific agent
+  GET  /api/agents/phase/{phase}      - get agents by phase
+  POST /api/agents/phase/{phase}/run  - run all agents in phase
+  GET  /api/health/agents             - agent health check
+"""
+
+from flask import Blueprint, request, jsonify
 from datetime import datetime
 from backend.agents.orchestrator import get_orchestrator
+from backend.utils.logger import log_info, log_error
 
 agents_bp = Blueprint("agents", __name__, url_prefix="/api/agents")
+
 
 @agents_bp.route("", methods=["GET"])
 def list_agents():
@@ -18,12 +32,15 @@ def list_agents():
             "timestamp": datetime.now().isoformat() + "Z"
         }), 200
     except Exception as e:
+        log_error(f"Failed to list agents: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 @agents_bp.route("/run", methods=["POST"])
 def run_all_agents():
     """Run all 14 agents sequentially"""
     try:
+        log_info("Starting orchestrator: running all 14 agents")
         orchestrator = get_orchestrator()
         result = orchestrator.run_all()
         
@@ -33,12 +50,15 @@ def run_all_agents():
             "timestamp": datetime.now().isoformat() + "Z"
         }), 200
     except Exception as e:
+        log_error(f"Failed to run all agents: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 @agents_bp.route("/<agent_name>/run", methods=["POST"])
 def run_agent(agent_name):
     """Run a specific agent by name"""
     try:
+        log_info(f"Running agent: {agent_name}")
         orchestrator = get_orchestrator()
         result = orchestrator.run_agent(agent_name)
         
@@ -51,7 +71,9 @@ def run_agent(agent_name):
             "timestamp": datetime.now().isoformat() + "Z"
         }), 200
     except Exception as e:
+        log_error(f"Failed to run agent {agent_name}: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 @agents_bp.route("/phase/<int:phase>", methods=["GET"])
 def get_phase_agents(phase):
@@ -76,7 +98,9 @@ def get_phase_agents(phase):
             "timestamp": datetime.now().isoformat() + "Z"
         }), 200
     except Exception as e:
+        log_error(f"Failed to get phase {phase} agents: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 @agents_bp.route("/phase/<int:phase>/run", methods=["POST"])
 def run_phase_agents(phase):
@@ -85,6 +109,7 @@ def run_phase_agents(phase):
         return jsonify({"status": "error", "message": "Phase must be 1, 2, or 3"}), 400
     
     try:
+        log_info(f"Running phase {phase} agents")
         orchestrator = get_orchestrator()
         results = orchestrator.run_phase(phase)
         
@@ -101,7 +126,9 @@ def run_phase_agents(phase):
             "timestamp": datetime.now().isoformat() + "Z"
         }), 200
     except Exception as e:
+        log_error(f"Failed to run phase {phase} agents: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
 
 @agents_bp.route("/<agent_name>", methods=["GET"])
 def get_agent_status(agent_name):
@@ -113,7 +140,7 @@ def get_agent_status(agent_name):
         if not agent:
             return jsonify({
                 "status": "error",
-                "message": f"Agent '\''{agent_name}'\'' not found"
+                "message": f"Agent '{agent_name}' not found"
             }), 404
         
         return jsonify({
@@ -125,4 +152,5 @@ def get_agent_status(agent_name):
             "timestamp": datetime.now().isoformat() + "Z"
         }), 200
     except Exception as e:
+        log_error(f"Failed to get agent status: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
