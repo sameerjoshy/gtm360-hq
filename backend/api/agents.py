@@ -1,6 +1,6 @@
-﻿from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify
 from datetime import datetime
-from backend.agents.orchestrator import get_orchestrator
+from agents.orchestrator import get_orchestrator
 
 agents_bp = Blueprint("agents", __name__, url_prefix="/api/agents")
 
