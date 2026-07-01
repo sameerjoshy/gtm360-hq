@@ -1,6 +1,6 @@
-﻿"""
+﻿"`"
 GTM360 HQ Backend Flask Application
-"""
+"`"
 from flask import Flask, jsonify
 from flask_cors import CORS
 import os
@@ -44,10 +44,11 @@ def create_app():
         logger.error(f"Server error: {e}")
         return jsonify({"error": "Internal server error"}), 500
     
-    logger.info(f"GTM360 HQ Backend initialized")
+    logger.info("GTM360 HQ Backend initialized")
     return app
 
+app = create_app()
+
 if __name__ == "__main__":
-    app = create_app()
     debug = os.getenv("ENVIRONMENT") == "development"
     app.run(host="0.0.0.0", port=5000, debug=debug)
