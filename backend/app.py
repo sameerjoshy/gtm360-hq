@@ -1,6 +1,4 @@
-﻿"`"
-GTM360 HQ Backend Flask Application
-"`"
+﻿"""GTM360 HQ Backend Flask Application"""
 from flask import Flask, jsonify
 from flask_cors import CORS
 import os
@@ -29,11 +27,7 @@ def create_app():
     
     @app.route("/health", methods=["GET"])
     def health():
-        return jsonify({
-            "status": "healthy",
-            "timestamp": datetime.utcnow().isoformat(),
-            "environment": os.getenv("ENVIRONMENT", "development")
-        }), 200
+        return jsonify({"status": "healthy", "timestamp": datetime.utcnow().isoformat(), "environment": os.getenv("ENVIRONMENT", "development")}), 200
     
     @app.errorhandler(404)
     def not_found(e):
